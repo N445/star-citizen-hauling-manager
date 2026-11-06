@@ -1,0 +1,8 @@
+<div class="row align-items-end border-top pt-2" data-form-collection-item>
+    <div class="col-12">{{ form_row(delivery.dropoff) }}</div>
+    <div class="col-12">{{ form_row(delivery.resource) }}</div>
+    <div class="col-9">{{ form_row(delivery.quantity) }}</div>
+    <div class="col-3 mb-3 text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="form-collection#remove" title="{{ 'mission.form.remove_delivery'|trans }}">×</button>
+    </div>
+</div>

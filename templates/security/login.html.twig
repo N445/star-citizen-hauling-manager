@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% trans_default_domain 'account' %}
+
+{% block title %}{{ 'login.title'|trans }} · Hauling Manager{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-sm-8 col-md-6 col-lg-4">
+            <h1 class="h3 mb-3">{{ 'login.title'|trans }}</h1>
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            {% endif %}
+
+            <form method="post" action="{{ path('app_login') }}">
+                <div class="mb-3">
+                    <label class="form-label" for="username">{{ 'login.email'|trans }}</label>
+                    <input class="form-control" type="email" id="username" name="_username" value="{{ lastUsername }}" autocomplete="email" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="password">{{ 'login.password'|trans }}</label>
+                    <input class="form-control" type="password" id="password" name="_password" autocomplete="current-password" required>
+                </div>
+                <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+                <button class="btn btn-primary w-100" type="submit">{{ 'login.submit'|trans }}</button>
+            </form>
+
+            <p class="mt-3 text-body-secondary">{{ 'login.no_account'|trans }} <a href="{{ path('app_register') }}">{{ 'login.register_link'|trans }}</a></p>
+        </div>
+    </div>
+{% endblock %}

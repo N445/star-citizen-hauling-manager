@@ -1,0 +1,29 @@
+{
+    "devDependencies": {
+        "@babel/core": "^8.0.0",
+        "@babel/preset-env": "^8.0.0",
+        "@hotwired/stimulus": "^3.0.0",
+        "@symfony/ux-live-component": "file:vendor/symfony/ux-live-component/assets",
+        "@symfony/webpack-encore": "^7.0.0",
+        "babel-plugin-polyfill-corejs3": "^1.0.0",
+        "core-js": "^3.49.0",
+        "webpack": "^5.82",
+        "webpack-cli": "^7.0.0"
+    },
+    "license": "UNLICENSED",
+    "private": true,
+    "scripts": {
+        "dev-server": "encore dev-server",
+        "dev": "encore dev",
+        "watch": "encore dev --watch",
+        "build": "encore production --progress"
+    },
+    "dependencies": {
+        "@popperjs/core": "^2.11.8",
+        "@symfony/stimulus-bridge": "^4.0.2",
+        "bootstrap": "^5.3.8",
+        "sortablejs": "^1.15.7",
+        "three": "^0.187.0",
+        "tom-select": "^2.6.2"
+    }
+}

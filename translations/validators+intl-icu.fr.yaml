@@ -1,0 +1,35 @@
+tour:
+    name:
+        not_blank: Donne un nom à la tournée.
+    ship_name:
+        not_blank: Choisis ou saisis un vaisseau.
+    capacity:
+        not_null: Indique la capacité du vaisseau.
+    door_sides:
+        count: Coche au moins une porte cargo.
+
+mission:
+    reward:
+        not_null: Indique la récompense.
+    type:
+        not_null: Choisis le type de mission.
+    pickups:
+        count: Indique au moins un lieu de ramassage.
+    deliveries:
+        count: Ajoute au moins une livraison.
+
+delivery:
+    dropoff:
+        not_blank: Indique le lieu de livraison.
+    resource:
+        not_blank: Indique la ressource.
+    quantity:
+        not_null: Indique la quantité.
+
+mission_type:
+    direct:
+        rule: Une mission directe a un seul lieu de ramassage et un seul lieu de livraison.
+    multiple_drop_off:
+        rule: Une mission à livraisons multiples a un seul lieu de ramassage et au moins deux lieux de livraison.
+    multiple_pick_up:
+        rule: Une mission à ramassages multiples a au moins deux lieux de ramassage et un seul lieu de livraison.

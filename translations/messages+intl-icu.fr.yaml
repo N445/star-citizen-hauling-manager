@@ -1,0 +1,133 @@
+nav:
+    language: Langue
+
+action:
+    cancel: Annuler
+    edit: Modifier
+    remove: Retirer
+
+form:
+    optional: optionnel
+
+money:
+    auec: '{amount, number, integer} aUEC'
+
+flash:
+    tour:
+    guest:
+        replace_hint: "Sans compte, tu gardes une seule tournée : une nouvelle remplace celle-ci. Inscris-toi pour garder ton historique."
+        account_hint: "Pas besoin de compte. Inscris-toi plus tard pour garder ta tournée et l'historique de tes missions."
+        created: 'Tournée créée : ajoute ses missions.'
+        saved: Tournée enregistrée.
+
+tour:
+    guest:
+        replace_hint: "Sans compte, tu gardes une seule tournée : une nouvelle remplace celle-ci. Inscris-toi pour garder ton historique."
+        account_hint: "Pas besoin de compte. Inscris-toi plus tard pour garder ta tournée et l'historique de tes missions."
+    new: Nouvelle tournée
+    card:
+        title: Tournée
+    list:
+        title: Tournées
+        empty: Aucune tournée pour l'instant.
+        summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
+    form:
+        name: Nom de la tournée
+        ship: Vaisseau
+        capacity: Capacité (SCU)
+        start_location: Point de départ
+        door_sides: Portes cargo du vaisseau
+        door_sides_help: Enregistré sur le vaisseau. Les caisses livrées en premier sont placées près d'une porte.
+        save: Enregistrer la tournée
+        create: Créer la tournée
+
+door_side:
+    rear: Arrière
+    front: Avant
+    left: Gauche
+    right: Droite
+    top: Dessus
+    bottom: Dessous
+
+mission_type:
+    direct:
+        label: 'Directe (A → B)'
+        short: Directe
+    multiple_drop_off:
+        label: 'Livraisons multiples (A → B et C)'
+        short: Livraisons multiples
+    multiple_pick_up:
+        label: 'Ramassages multiples (A ou B → C)'
+        short: Ramassages multiples
+
+mission:
+    done: Terminée
+    done_in: 'Terminée en {duration}'
+    pickups_separator: ou
+    delivery_line: '{dropoff} : {quantity} SCU'
+    board:
+        new_title: Nouvelle mission
+        edit_title: Modifier la mission
+        list_title: Missions
+        totals: '{quantity} / {capacity} SCU · {reward, number, integer} aUEC'
+        empty: Aucune mission pour l'instant.
+    form:
+        type: Type de mission
+        type_placeholder: Choisir…
+        type_help: Les champs suivants apparaissent une fois le type choisi.
+        name: Nom
+        reward: Récompense
+        reward_placeholder: aUEC
+        pickups: Ramassage(s)
+        pickup_count: '{count, plural, one {Ramassage} other {Ramassages}}'
+        deliveries: Livraisons
+        dropoff: Livraison
+        dropoff_placeholder: Lieu de livraison
+        resource: Ressource
+        quantity: SCU
+        add_delivery: Ajouter une livraison
+        remove_delivery: Retirer la livraison
+        save: Enregistrer la mission
+        submit: Valider la mission
+
+cargo:
+    title: Soute
+    scale: 1 case = 1 SCU
+    controls: 'clic-glisser : tourner · molette : zoom'
+    no_grid: 'Aucune grille : choisis un vaisseau du catalogue.'
+    warning:
+        stacked: 'Faute de place, {count, plural, one {# caisse doit être posée} other {# caisses doivent être posées}} sur une caisse livrée avant elle.'
+        unplaced: '{quantity} SCU ne trouvent pas de place dans la soute à un moment du trajet.'
+    crate:
+        label: '{size} SCU {resource} · {mission} → {dropoff}'
+        label_stacked: '{size} SCU {resource} · {mission} → {dropoff} — posée sur une caisse livrée avant, faute de place'
+
+route:
+    title: Parcours
+    create_tour_first: Crée la tournée pour calculer son parcours.
+    locked: 'Tournée commencée : le parcours est figé, il ne bouge plus quand tu coches.'
+    no_missions: Ajoute des missions pour calculer le parcours.
+    finished: Tournée terminée.
+    stop_count: '{count, plural, one {# arrêt} other {# arrêts}}'
+    no_start: sans point de départ
+    reset_order: Recalcul auto
+    reorder_help: Glisse un arrêt pas encore fait par sa poignée ⠿ pour réorganiser le trajet.
+    start: Départ
+    mode:
+        aria: Mode de calcul
+        fewest_stops:
+            label: Moins d'arrêts
+            description: Mutualise les missions pour passer le moins souvent possible par un même lieu.
+        mission_focus:
+            label: Mission par mission
+            description: Termine chaque mission avant d'en commencer une autre, dans l'ordre le plus court.
+    stop:
+        drag: Glisser pour déplacer l'arrêt
+        drop: 'Livre {quantity} SCU'
+        pickup: Récupère
+        split_pickup: 'Quantité répartie entre {count} lieux de ramassage.'
+    error:
+        too_many_tasks: "Trop d'étapes pour calculer le parcours ({count}, maximum {maximum})."
+        mission_exceeds_capacity: 'Une mission transporte {quantity} SCU, plus que la capacité du vaisseau ({capacity} SCU).'
+        no_route: "Aucun parcours possible : la capacité du vaisseau ne permet pas d'enchaîner ces missions."
+        too_many_combinations: 'Trop de combinaisons à explorer : réduis le nombre de missions de la tournée.'

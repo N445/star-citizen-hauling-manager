@@ -1,0 +1,45 @@
+{% trans_default_domain 'admin' %}
+{% set tour = entity.instance %}
+<h2 class="h5 mt-2 mb-3">{{ 'tour.missions'|trans }} <span class="text-muted fw-normal">({{ field.value|length }})</span></h2>
+{% if field.value is empty %}
+    <p class="text-muted">—</p>
+{% else %}
+    <div class="row g-3">
+        {% for mission in field.value %}
+            <div class="col-12 col-xxl-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <strong>{{ tour.missionLabel(mission) }}</strong>
+                            <span class="text-nowrap">{{ mission.reward|number_format(0, ',', ' ') }} aUEC</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 my-2">
+                            <span class="badge badge-secondary">{{ mission.type.shortLabel|trans({}, 'messages') }}</span>
+                            {% if mission.isDone %}
+                                <span class="badge badge-success">{{ 'mission.state.done'|trans }}{% if mission.durationInSeconds is not null %} · {{ mission.durationInSeconds|duration }}{% endif %}</span>
+                            {% elseif mission.startedAt %}
+                                <span class="badge badge-warning">{{ 'mission.state.in_progress'|trans }}</span>
+                            {% else %}
+                                <span class="badge badge-light">{{ 'mission.state.pending'|trans }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted">{{ 'mission.pickups'|trans }}</div>
+                        <div class="mb-2">{{ mission.pickups|join(' · ') }}</div>
+                        <div class="small text-muted">{{ 'mission.deliveries'|trans }}</div>
+                        <ul class="list-unstyled mb-0">
+                            {% for delivery in mission.deliveries %}
+                                <li>{{ delivery.isDelivered ? '✓' : '·' }} {{ delivery.quantity }} SCU {{ delivery.resource }} → {{ delivery.dropoff }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% if mission.startedAt %}
+                            <div class="small text-muted mt-2">
+                                {{ 'mission.started_at'|trans }} {{ mission.startedAt|date('d/m/Y H:i') }}
+                                {% if mission.finishedAt %} · {{ 'mission.finished_at'|trans }} {{ mission.finishedAt|date('d/m/Y H:i') }}{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

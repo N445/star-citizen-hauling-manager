@@ -1,38 +1,60 @@
+name: sc-hauling
 
 services:
   php:
-    build: ./docker
+    container_name: sc_hauling_php
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    image: sc-hauling-dev
+    restart: unless-stopped
+    user: ${APP_UID:-1000}:${APP_GID:-1000}
     environment:
-      PHP_CLI_SERVER_WORKERS: 4
+      SERVER_NAME: ":8000"
     volumes:
-      - .:/app
-      # vendor/ et var/ dans des volumes natifs : le partage Windows (9p) est ~100x plus lent
-      - php_vendor:/app/vendor
-      - php_var:/app/var
+      - ./:/app
     ports:
       - "8000:8000"
-###> doctrine/doctrine-bundle ###
+    depends_on:
+      database: { condition: service_healthy }
+    networks: [app, traefik]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-main_traefik}
+      # Noms distincts de ceux de compose.prod.yaml : deux piles qui partagent un nom deviennent un seul service Traefik.
+      traefik.http.routers.sc-hauling-dev.rule: Host(`${APP_DOMAIN:-sc-hauling-manager.local}`)
+      traefik.http.routers.sc-hauling-dev.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTP:-web}
+      traefik.http.routers.sc-hauling-dev-https.rule: Host(`${APP_DOMAIN:-sc-hauling-manager.local}`)
+      traefik.http.routers.sc-hauling-dev-https.entrypoints: ${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
+      traefik.http.routers.sc-hauling-dev-https.tls: "true"
+      traefik.http.services.sc-hauling-dev.loadbalancer.server.port: "8000"
+
   database:
-    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    container_name: sc_hauling_database
+    image: mariadb:11.4
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
+      MARIADB_DATABASE: ${DB_NAME:-app}
+      MARIADB_USER: ${DB_USER:-app}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     healthcheck:
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
     volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - database_data:/var/lib/mysql
+    networks: [app]
 
 volumes:
-  php_vendor:
-  php_var:
-###> doctrine/doctrine-bundle ###
   database_data:
-###< doctrine/doctrine-bundle ###
+
+networks:
+  app:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-main_traefik}

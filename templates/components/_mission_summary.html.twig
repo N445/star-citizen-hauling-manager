@@ -1,0 +1,20 @@
+<div class="card mb-2 {{ mission.isDone ? 'mission-card--done' }}" data-highlight-key="{{ mission_token(mission.id) }}"
+     data-highlight-tokens="{{ ([mission_token(mission.id)]|merge(mission.deliveries|map(d => delivery_token(d.id)))|merge(mission.deliveries|map(d => resource_token(d.resource))))|join(' ') }}">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-between">
+            <strong>{{ tour.missionLabel(mission) }}{% if mission.isDone %} <span class="badge text-bg-secondary">{{ mission.durationInSeconds is null ? 'mission.done'|trans : 'mission.done_in'|trans({duration: mission.durationInSeconds|duration}) }}</span>{% endif %}</strong>
+            <span>{{ 'money.auec'|trans({amount: mission.reward}) }}</span>
+        </div>
+        <div class="small text-body-secondary mb-1">{{ mission.type.shortLabel|trans }}</div>
+        <div class="small">{{ mission.pickups|join(' ' ~ 'mission.pickups_separator'|trans ~ ' ') }}</div>
+        <ul class="small list-unstyled mb-2">
+            {% for delivery in mission.deliveries %}
+                <li>→ {{ 'mission.delivery_line'|trans({dropoff: delivery.dropoff, quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}</li>
+            {% endfor %}
+        </ul>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-action="live#action" data-live-action-param="edit" data-live-id-param="{{ mission.id }}">{{ 'action.edit'|trans }}</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-action="live#action" data-live-action-param="remove" data-live-id-param="{{ mission.id }}">{{ 'action.remove'|trans }}</button>
+        </div>
+    </div>
+</div>

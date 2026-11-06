@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% trans_default_domain 'account' %}
+
+{% block title %}{{ 'history.title'|trans }} · Hauling Manager{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">{{ 'history.title'|trans }}</h1>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <div class="card"><div class="card-body">
+                <div class="text-body-secondary small">{{ 'history.total.missions'|trans }}</div>
+                <div class="fs-4">{{ missions|length }}</div>
+            </div></div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card"><div class="card-body">
+                <div class="text-body-secondary small">{{ 'history.total.reward'|trans }}</div>
+                <div class="fs-4">{{ 'history.reward'|trans({amount: totalReward}) }}</div>
+            </div></div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card"><div class="card-body">
+                <div class="text-body-secondary small">{{ 'history.total.duration'|trans }}</div>
+                <div class="fs-4">{{ totalDuration|duration }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    {% if missions is empty %}
+        <p class="text-body-secondary">{{ 'history.empty'|trans }}</p>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ 'history.column.tour'|trans }}</th>
+                        <th>{{ 'history.column.mission'|trans }}</th>
+                        <th>{{ 'history.column.type'|trans }}</th>
+                        <th class="text-end">{{ 'history.column.reward'|trans }}</th>
+                        <th>{{ 'history.column.finished_at'|trans }}</th>
+                        <th class="text-end">{{ 'history.column.duration'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mission in missions %}
+                        <tr>
+                            <td><a href="{{ path('tour', {id: mission.tour.id}) }}">{{ mission.tour.name }}</a></td>
+                            <td>{{ mission.tour.missionLabel(mission) }}</td>
+                            <td>{{ mission.type.shortLabel|trans(domain: 'messages') }}</td>
+                            <td class="text-end">{{ 'history.reward'|trans({amount: mission.reward}) }}</td>
+                            <td>{{ 'history.finished_at'|trans({date: mission.finishedAt}) }}</td>
+                            <td class="text-end">{{ mission.durationInSeconds is null ? '—' : mission.durationInSeconds|duration }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

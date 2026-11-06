@@ -1,0 +1,7 @@
+<div class="{{ row_class|default('mb-3') }}">
+    {{ form_label(field, label|default(null), {label_attr: {class: label_class|default('form-label')}}) }}
+    <div data-live-ignore id="{{ field.vars.id }}-searchable-{{ formVersion }}{{ id_suffix|default('') }}">
+        {{ form_widget(field, {attr: field.vars.attr|merge(extra_attr|default({}))}) }}
+    </div>
+    {{ form_errors(field) }}
+</div>

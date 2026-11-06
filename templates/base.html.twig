@@ -1,16 +1,36 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Hauling Manager{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%230b1118%22/><rect x=%2220%22 y=%2230%22 width=%2260%22 height=%2240%22 fill=%22%2339d98a%22/></svg>">
-        {% block stylesheets %}{% endblock %}
+        {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
+        {% endblock %}
         {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
+            {{ encore_entry_script_tags('app') }}
         {% endblock %}
     </head>
-    <body>
-        {% block body %}{% endblock %}
+    <body data-controller="highlight">
+        <nav class="navbar navbar-dark bg-dark mb-4">
+            <div class="{{ block('main_class') }}">
+                <a class="navbar-brand" href="{{ path('home') }}">Hauling Manager</a>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'nav.language'|trans }}">
+                        {% for locale in app.enabled_locales %}
+                            <a class="btn {{ locale == app.request.locale ? 'btn-light' : 'btn-outline-light' }}" href="{{ path('locale_switch', {locale: locale}) }}" hreflang="{{ locale }}" lang="{{ locale }}">{{ locale|upper }}</a>
+                        {% endfor %}
+                    </div>
+                    {{ include('_user_menu.html.twig', ignore_missing = true) }}
+                </div>
+            </div>
+        </nav>
+        <main class="{% block main_class %}container{% endblock %} pb-5">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">{{ message|trans }}</div>
+            {% endfor %}
+            {% block body %}{% endblock %}
+        </main>
     </body>
 </html>

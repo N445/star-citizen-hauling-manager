@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ tour ? tour.name : 'tour.new'|trans }} — {{ parent() }}{% endblock %}
+
+{% block main_class %}container-fluid px-4{% endblock %}
+
+{% block body %}
+    <div class="row g-4">
+        <section class="col-lg-3">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>{{ (tour ? 'tour.card.title' : 'tour.new')|trans }}</span>
+                    {% if tour %}
+                        <a class="btn btn-sm btn-outline-primary" href="{{ path('tour_new') }}"
+                           {% if not app.user %}title="{{ 'tour.guest.replace_hint'|trans }}"{% endif %}>{{ 'tour.new'|trans }}</a>
+                    {% endif %}
+                </div>
+                {% if not app.user %}
+                    <div class="small text-body-secondary px-3 pt-2">{{ (tour ? 'tour.guest.replace_hint' : 'tour.guest.account_hint')|trans }}</div>
+                {% endif %}
+                <div class="card-body">
+                    {{ form_start(tourForm, {attr: {novalidate: 'novalidate'}}) }}
+                        {{ form_errors(tourForm) }}
+                        {{ form_row(tourForm.name) }}
+                        <div data-controller="ship-capacity">
+                            {{ form_row(tourForm.shipName) }}
+                            {{ form_row(tourForm.capacity) }}
+                        </div>
+                        {{ form_row(tourForm.startLocation) }}
+                        {{ form_row(tourForm.doorSides) }}
+                        <button class="btn btn-primary w-100">{{ (tour ? 'tour.form.save' : 'tour.form.create')|trans }}</button>
+                    {{ form_end(tourForm) }}
+                </div>
+            </div>
+
+            {% if tour %}
+                {{ component('MissionBoard', {tour: tour}) }}
+            {% endif %}
+        </section>
+
+        <section class="col-lg-6">
+            <div class="card sticky-lg-top cargo-panel"
+                 data-controller="cargo-grid"
+                 data-cargo-grid-groups-value="{{ (ship ? ship.cargoGroups : [])|json_encode }}"
+                 data-action="tom-select:change@window->cargo-grid#show cargo:plan@window->cargo-grid#plan cargo:highlight@window->cargo-grid#highlight">
+                <div class="card-header d-flex justify-content-between"><span>{{ 'cargo.title'|trans }} <small class="text-body-secondary">— {{ 'cargo.scale'|trans }}</small></span><small class="text-body-secondary">{{ 'cargo.controls'|trans }}</small></div>
+                <div class="card-body">
+                    <div data-cargo-grid-target="canvas"></div>
+                    <p class="text-body-secondary mb-0" data-cargo-grid-target="empty">{{ 'cargo.no_grid'|trans }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-lg-3">
+            {% if tour %}
+                {{ component('RoutePanel', {tour: tour}) }}
+            {% else %}
+                <div class="card">
+                    <div class="card-header">{{ 'route.title'|trans }}</div>
+                    <div class="card-body text-body-secondary">{{ 'route.create_tour_first'|trans }}</div>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

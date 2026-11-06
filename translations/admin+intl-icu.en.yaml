@@ -1,0 +1,72 @@
+menu:
+    site: Back to the site
+    accounts: Accounts
+    users: Users
+    planning: Planning
+    tours: Tours
+    missions: Missions
+    catalog: Catalog
+    ships: Ships
+    commodities: Commodities
+
+user:
+    singular: User
+    plural: Users
+    email: Email
+    admin: Administrator
+    registered_at: Signed up
+    tours: Tours
+    new_password: New password
+    new_password_help: Leave empty to keep the current password. At least 8 characters.
+
+tour:
+    singular: Tour
+    plural: Tours
+    name: Name
+    owner: Owner
+    guest: guest
+    orphan: orphan
+    ship: Ship
+    capacity: Capacity (SCU)
+    start_location: Start location
+    missions: Missions
+    filter:
+        guest: Guest tour
+        not_guest: Not a guest tour
+        is_guest: Guest tour
+
+mission:
+    singular: Mission
+    plural: Missions
+    tour: Tour
+    label: Label
+    type: Type
+    reward: Reward (aUEC)
+    started_at: Started
+    finished_at: Finished
+    duration: Duration
+    pickups: Pickups
+    state:
+        pending: Not started
+        in_progress: In progress
+        done: Completed
+    deliveries: Deliveries
+    filter:
+        status: Status
+        unfinished: Not finished
+        finished: Finished
+
+ship:
+    singular: Ship
+    plural: Ships
+    manufacturer: Manufacturer
+    name: Name
+    capacity: Capacity (SCU)
+    door_sides: Cargo doors
+    cargo_groups: Cargo grid (JSON)
+
+commodity:
+    singular: Commodity
+    plural: Commodities
+    name: Name
+    color: Color

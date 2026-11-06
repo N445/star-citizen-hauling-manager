@@ -1,0 +1,25 @@
+ENV_FILES := --env-file .env $(if $(wildcard .env.local),--env-file .env.local)
+DC := docker compose $(ENV_FILES)
+
+.PHONY: up down logs sh update ships
+
+up:
+	$(DC) up -d --wait
+
+down:
+	$(DC) down
+
+logs:
+	$(DC) logs -f
+
+sh:
+	$(DC) exec php bash
+
+update:
+	$(DC) pull php
+	$(DC) up -d --wait
+	$(DC) exec -T php bin/console doctrine:migrations:migrate -n --allow-no-migration
+
+# À planifier en cron : les vaisseaux et leurs grilles viennent de sc-cargo.space, jamais lus en direct.
+ships:
+	$(DC) exec -T php bin/console app:ships:import

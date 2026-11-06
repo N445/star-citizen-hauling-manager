@@ -1,0 +1,39 @@
+<li class="route-stop {{ stop.isDone ? 'route-stop--done' }} {{ movable ? 'route-stop--movable' }} {{ current ? 'route-stop--current' }} {{ isStart ? 'route-stop--start' }}" data-location="{{ stop.location }}"
+    data-highlight-key="{{ step_token(step) }}" data-highlight-tokens="{{ step_token(step) }}">
+    <div class="d-flex justify-content-between align-items-baseline">
+        <span>
+            {% if movable %}<span class="route-stop-handle" title="{{ 'route.stop.drag'|trans }}">⠿</span>{% endif %}
+            <span class="route-stop-number">{{ label }}</span> <strong>{{ stop.location }}</strong>
+        </span>
+        {% if stop.load is not null %}
+            <small class="text-body-secondary text-nowrap">{{ stop.load }}/{{ tour.capacity }} SCU</small>
+        {% endif %}
+    </div>
+    {% for delivery in stop.deliveries %}
+        <label class="route-action route-action--drop {{ delivery.isDelivered ? 'route-action--done' }}"
+               data-highlight-key="{{ delivery_token(delivery.id) }}"
+               data-highlight-tokens="{{ [delivery_token(delivery.id), mission_token(delivery.mission.id), resource_token(delivery.resource), step_token(step)]|join(' ') }}">
+            <input type="checkbox" class="form-check-input me-1" id="delivery-done-{{ delivery.id }}" {{ delivery.isDelivered ? 'checked' }}
+                   data-action="change->live#action" data-live-action-param="toggleDelivery" data-live-id-param="{{ delivery.id }}">
+            ↓ {{ 'route.stop.drop'|trans({quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
+            <span class="text-body-secondary">· {{ tour.missionLabel(delivery.mission) }}</span>
+        </label>
+    {% endfor %}
+    {% for mission in stop.pickups %}
+        {% set pickedUp = mission.isPickedUpAt(stop.location) %}
+        <label class="route-action route-action--pickup {{ pickedUp ? 'route-action--done' }}"
+               data-highlight-key="{{ mission_token(mission.id) }}"
+               data-highlight-tokens="{{ ([mission_token(mission.id), step_token(step)]|merge(mission.deliveries|map(d => delivery_token(d.id)))|merge(mission.deliveries|map(d => resource_token(d.resource))))|join(' ') }}">
+            <input type="checkbox" class="form-check-input me-1" id="pickup-done-{{ mission.id }}-{{ stop.location|lower|replace({' ': '-'}) }}" {{ pickedUp ? 'checked' }}
+                   data-action="change->live#action" data-live-action-param="togglePickup"
+                   data-live-mission-param="{{ mission.id }}" data-live-location-param="{{ stop.location }}">
+            ↑ {{ 'route.stop.pickup'|trans }} <span class="text-body-secondary">{{ tour.missionLabel(mission) }}</span>
+            {% for delivery in mission.deliveries %}
+                <span class="d-block ms-4">{{ delivery.quantity }} SCU {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }} → {{ delivery.dropoff }}</span>
+            {% endfor %}
+            {% if mission.pickups|length > 1 %}
+                <span class="d-block ms-4 small text-body-secondary">{{ 'route.stop.split_pickup'|trans({count: mission.pickups|length}) }}</span>
+            {% endif %}
+        </label>
+    {% endfor %}
+</li>

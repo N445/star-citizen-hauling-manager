@@ -1,0 +1,79 @@
+menu:
+    profile: Profile
+    tours: My tours
+    history: History
+    logout: Log out
+    login: Log in
+    register: Sign up
+
+login:
+    title: Log in
+    email: Email
+    password: Password
+    submit: Log in
+    no_account: No account yet?
+    register_link: Sign up
+
+registration:
+    title: Sign up
+    submit: Create my account
+    has_account: Already have an account?
+    login_link: Log in
+    form:
+        email: Email
+        password: Password
+        password_help: At least 8 characters.
+        password_confirmation: Confirm password
+    email:
+        blank: Enter your email address.
+        invalid: This email address is not valid.
+        too_long: This email address is too long.
+        taken: An account already exists with this email address.
+    password:
+        blank: Choose a password.
+        too_short: 'The password must be at least {limit} characters long.'
+        too_long: The password is too long.
+        mismatch: The two passwords do not match.
+
+flash:
+    registered: Welcome! Your account is ready.
+
+history:
+    title: History
+    empty: No finished mission yet. Tick the pickups and deliveries of a tour to fill this page.
+    reward: '{amount, number, integer} aUEC'
+    finished_at: '{date, date, medium} {date, time, short}'
+    total:
+        missions: Finished missions
+        reward: aUEC earned
+        duration: Total time
+    column:
+        tour: Tour
+        mission: Mission
+        type: Type
+        reward: Reward
+        finished_at: Finished
+        duration: Duration
+
+profile:
+    title: Profile
+    current_password:
+        label: Current password
+        invalid: "The current password is incorrect."
+    email:
+        title: Email address
+        new: Email address
+        submit: Change my email
+        changed: "Your email address has been changed."
+    password:
+        title: Password
+        new: New password
+        submit: Change my password
+        changed: "Your password has been changed."
+    delete:
+        title: Delete my account
+        warning: "This deletes your account and everything attached to it — all your tours, their missions and your history. Nothing is kept and it cannot be undone."
+        confirmation: "I understand that everything will be permanently deleted."
+        confirmation_required: "Tick the box to confirm the deletion."
+        submit: Delete my account permanently
+        done: "Your account and all its data have been deleted."

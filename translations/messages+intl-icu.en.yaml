@@ -1,0 +1,130 @@
+nav:
+    language: Language
+
+action:
+    cancel: Cancel
+    edit: Edit
+    remove: Remove
+
+form:
+    optional: optional
+
+money:
+    auec: '{amount, number, integer} aUEC'
+
+flash:
+    tour:
+        created: 'Tour created: now add its missions.'
+        saved: Tour saved.
+
+tour:
+    new: New tour
+    guest:
+        replace_hint: "Without an account you keep a single tour: a new one replaces this one. Sign up to keep your history."
+        account_hint: "No account needed. Sign up later to keep your tour and your mission history."
+    card:
+        title: Tour
+    list:
+        title: Tours
+        empty: No tours yet.
+        summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
+    form:
+        name: Tour name
+        ship: Ship
+        capacity: Capacity (SCU)
+        start_location: Starting point
+        door_sides: Ship cargo doors
+        door_sides_help: Saved on the ship. Crates delivered first are placed near a door.
+        save: Save tour
+        create: Create tour
+
+door_side:
+    rear: Rear
+    front: Front
+    left: Left
+    right: Right
+    top: Top
+    bottom: Bottom
+
+mission_type:
+    direct:
+        label: 'Direct (A → B)'
+        short: Direct
+    multiple_drop_off:
+        label: 'Multiple drop-offs (A → B and C)'
+        short: Multiple drop-offs
+    multiple_pick_up:
+        label: 'Multiple pickups (A or B → C)'
+        short: Multiple pickups
+
+mission:
+    done: Completed
+    done_in: 'Completed in {duration}'
+    pickups_separator: or
+    delivery_line: '{dropoff}: {quantity} SCU'
+    board:
+        new_title: New mission
+        edit_title: Edit mission
+        list_title: Missions
+        totals: '{quantity} / {capacity} SCU · {reward, number, integer} aUEC'
+        empty: No missions yet.
+    form:
+        type: Mission type
+        type_placeholder: Choose…
+        type_help: The other fields appear once a type is chosen.
+        name: Name
+        reward: Reward
+        reward_placeholder: aUEC
+        pickups: Pickup(s)
+        pickup_count: '{count, plural, one {Pickup} other {Pickups}}'
+        deliveries: Drop-offs
+        dropoff: Drop-off
+        dropoff_placeholder: Drop-off location
+        resource: Commodity
+        quantity: SCU
+        add_delivery: Add a drop-off
+        remove_delivery: Remove this drop-off
+        save: Save mission
+        submit: Add mission
+
+cargo:
+    title: Cargo grid
+    scale: 1 cell = 1 SCU
+    controls: 'drag: rotate · wheel: zoom'
+    no_grid: 'No cargo grid: pick a ship from the catalog.'
+    warning:
+        stacked: 'Not enough room: {count, plural, one {# crate has} other {# crates have}} to sit on top of a crate delivered earlier.'
+        unplaced: '{quantity} SCU find no room in the cargo hold at some point of the route.'
+    crate:
+        label: '{size} SCU {resource} · {mission} → {dropoff}'
+        label_stacked: '{size} SCU {resource} · {mission} → {dropoff} — stacked on a crate delivered earlier, no room left'
+
+route:
+    title: Route
+    create_tour_first: Create the tour to plan its route.
+    locked: 'Tour started: the route is frozen and no longer moves when you tick items.'
+    no_missions: Add missions to plan the route.
+    finished: Tour complete.
+    stop_count: '{count, plural, one {# stop} other {# stops}}'
+    no_start: no starting point
+    reset_order: Auto-plan again
+    reorder_help: Drag a stop that is not done yet by its ⠿ handle to reorder the route.
+    start: Start
+    mode:
+        aria: Planning mode
+        fewest_stops:
+            label: Fewest stops
+            description: Combines missions to visit each location as few times as possible.
+        mission_focus:
+            label: One mission at a time
+            description: Finishes each mission before starting the next, in the shortest order.
+    stop:
+        drag: Drag to move this stop
+        drop: 'Drop off {quantity} SCU'
+        pickup: Pick up
+        split_pickup: 'Quantity split across {count} pickup locations.'
+    error:
+        too_many_tasks: 'Too many steps to plan the route ({count}, maximum {maximum}).'
+        mission_exceeds_capacity: 'A mission carries {quantity} SCU, more than the ship capacity ({capacity} SCU).'
+        no_route: 'No route possible: the ship capacity cannot chain these missions.'
+        too_many_combinations: 'Too many combinations to explore: reduce the number of missions in the tour.'

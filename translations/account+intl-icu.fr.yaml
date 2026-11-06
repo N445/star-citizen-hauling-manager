@@ -1,0 +1,79 @@
+menu:
+    profile: Profil
+    tours: Mes tournées
+    history: Historique
+    logout: Déconnexion
+    login: Connexion
+    register: Inscription
+
+login:
+    title: Connexion
+    email: E-mail
+    password: Mot de passe
+    submit: Se connecter
+    no_account: Pas encore de compte ?
+    register_link: Inscris-toi
+
+registration:
+    title: Inscription
+    submit: Créer mon compte
+    has_account: Déjà un compte ?
+    login_link: Connecte-toi
+    form:
+        email: E-mail
+        password: Mot de passe
+        password_help: 8 caractères minimum.
+        password_confirmation: Confirmation du mot de passe
+    email:
+        blank: Saisis ton adresse e-mail.
+        invalid: Cette adresse e-mail n'est pas valide.
+        too_long: Cette adresse e-mail est trop longue.
+        taken: Un compte existe déjà avec cette adresse e-mail.
+    password:
+        blank: Choisis un mot de passe.
+        too_short: 'Le mot de passe doit contenir au moins {limit} caractères.'
+        too_long: Le mot de passe est trop long.
+        mismatch: Les deux mots de passe ne correspondent pas.
+
+flash:
+    registered: Bienvenue ! Ton compte est prêt.
+
+history:
+    title: Historique
+    empty: Aucune mission terminée pour l'instant. Coche les ramassages et livraisons d'une tournée pour remplir cette page.
+    reward: '{amount, number, integer} aUEC'
+    finished_at: '{date, date, medium} {date, time, short}'
+    total:
+        missions: Missions terminées
+        reward: aUEC gagnés
+        duration: Temps cumulé
+    column:
+        tour: Tournée
+        mission: Mission
+        type: Type
+        reward: Récompense
+        finished_at: Terminée le
+        duration: Durée
+
+profile:
+    title: Profil
+    current_password:
+        label: Mot de passe actuel
+        invalid: "Le mot de passe actuel est incorrect."
+    email:
+        title: Adresse e-mail
+        new: Adresse e-mail
+        submit: Changer mon e-mail
+        changed: "Ton adresse e-mail a été modifiée."
+    password:
+        title: Mot de passe
+        new: Nouveau mot de passe
+        submit: Changer mon mot de passe
+        changed: "Ton mot de passe a été modifié."
+    delete:
+        title: Supprimer mon compte
+        warning: "Cela supprime ton compte et tout ce qui y est rattaché — toutes tes tournées, leurs missions et ton historique. Rien n'est conservé et c'est irréversible."
+        confirmation: "Je comprends que tout sera définitivement supprimé."
+        confirmation_required: "Coche la case pour confirmer la suppression."
+        submit: Supprimer définitivement mon compte
+        done: "Ton compte et toutes ses données ont été supprimés."

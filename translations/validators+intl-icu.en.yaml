@@ -1,0 +1,35 @@
+tour:
+    name:
+        not_blank: Give the tour a name.
+    ship_name:
+        not_blank: Pick or type a ship.
+    capacity:
+        not_null: Enter the ship capacity.
+    door_sides:
+        count: Tick at least one cargo door.
+
+mission:
+    reward:
+        not_null: Enter the reward.
+    type:
+        not_null: Choose the mission type.
+    pickups:
+        count: Enter at least one pickup location.
+    deliveries:
+        count: Add at least one drop-off.
+
+delivery:
+    dropoff:
+        not_blank: Enter the drop-off location.
+    resource:
+        not_blank: Enter the commodity.
+    quantity:
+        not_null: Enter the quantity.
+
+mission_type:
+    direct:
+        rule: A direct mission has a single pickup location and a single drop-off location.
+    multiple_drop_off:
+        rule: A multiple drop-off mission has a single pickup location and at least two drop-off locations.
+    multiple_pick_up:
+        rule: A multiple pickup mission has at least two pickup locations and a single drop-off location.

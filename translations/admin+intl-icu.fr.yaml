@@ -1,0 +1,72 @@
+menu:
+    site: Retour au site
+    accounts: Comptes
+    users: Utilisateurs
+    planning: Planification
+    tours: Tournées
+    missions: Missions
+    catalog: Catalogue
+    ships: Vaisseaux
+    commodities: Ressources
+
+user:
+    singular: Utilisateur
+    plural: Utilisateurs
+    email: E-mail
+    admin: Administrateur
+    registered_at: Inscrit le
+    tours: Tournées
+    new_password: Nouveau mot de passe
+    new_password_help: Laisser vide pour garder le mot de passe actuel. 8 caractères minimum.
+
+tour:
+    singular: Tournée
+    plural: Tournées
+    name: Nom
+    owner: Propriétaire
+    guest: invité
+    orphan: orpheline
+    ship: Vaisseau
+    capacity: Capacité (SCU)
+    start_location: Lieu de départ
+    missions: Missions
+    filter:
+        guest: Tournée d'invité
+        not_guest: Pas une tournée d'invité
+        is_guest: Tournée d'invité
+
+mission:
+    singular: Mission
+    plural: Missions
+    tour: Tournée
+    label: Libellé
+    type: Type
+    reward: Récompense (aUEC)
+    started_at: Début
+    finished_at: Fin
+    duration: Durée
+    pickups: Ramassages
+    state:
+        pending: Pas commencée
+        in_progress: En cours
+        done: Terminée
+    deliveries: Livraisons
+    filter:
+        status: État
+        unfinished: Non terminée
+        finished: Terminée
+
+ship:
+    singular: Vaisseau
+    plural: Vaisseaux
+    manufacturer: Constructeur
+    name: Nom
+    capacity: Capacité (SCU)
+    door_sides: Portes cargo
+    cargo_groups: Grille cargo (JSON)
+
+commodity:
+    singular: Ressource
+    plural: Ressources
+    name: Nom
+    color: Couleur

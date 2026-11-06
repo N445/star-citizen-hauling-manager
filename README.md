@@ -1,19 +1,20 @@
 # Star Citizen Hauling Manager
 
 Tour de pickup/drop sans aller-retours inutiles, vu par mission, avec la soute du vaisseau en surbrillance.
-Stack : PHP 8.4, Symfony 7.4, Symfony UX Live Component. Tout tourne sous Docker.
+Stack : PHP 8.4, Symfony 7.4, Doctrine/MariaDB 11.4. Tout tourne sous Docker.
 
 ## Lancer en local
-    docker compose up -d php        # http://localhost:8000
-    docker compose logs -f php      # logs
-    docker compose down             # arrêt
+Prérequis : le Traefik local (réseau `main_traefik`) et `127.0.0.1 sc-hauling-manager.local` dans `/etc/hosts`.
 
-Première fois (ou après un pull) :
+    make up          # build + démarrage + composer install + migrations → http://sc-hauling-manager.local (ou :8000)
+    make test        # lint + phpunit
+    make sh / logs / down
 
-    docker compose run --rm --no-deps php composer install
+## CI/CD
+- `.github/workflows/tests.yml` : lint + PHPUnit sur chaque PR et branche.
+- `.github/workflows/build.yml` : sur `main` (et tags `v*`), tests puis image prod publiée sur
+  `ghcr.io/n445/star-citizen-hauling-manager:{main|<sha court>}`. `make build-prod` produit la même en local.
+- Serveur : `compose.prod.yaml` (→ `compose.yaml`) + `Makefile.prod` (→ `Makefile`) + un `.env` avec `APP_SECRET`,
+  `APP_DOMAIN`, `DB_PASSWORD` et `DB_ROOT_PASSWORD`, puis `make update`.
 
-## Commandes utiles
-    docker compose exec php vendor/bin/phpunit
-    docker compose exec php php bin/console lint:twig templates
-
-Architecture : `docs/SPEC.md`.
+Catalogue des vaisseaux : `make ships`, import depuis sc-cargo.space, à mettre en cron sur le serveur.

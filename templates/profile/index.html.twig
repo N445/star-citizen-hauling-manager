@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% trans_default_domain 'account' %}
+{% form_theme emailForm _self %}
+{% form_theme passwordForm _self %}
+{% form_theme deletionForm _self %}
+
+{% block form_errors %}
+    {% for error in errors %}
+        {% set translated = error.messageTemplate|trans(error.messageParameters, 'account') %}
+        <div class="invalid-feedback d-block">{{ translated == error.messageTemplate ? error.message : translated }}</div>
+    {% endfor %}
+{% endblock %}
+
+{% block title %}{{ 'profile.title'|trans }} · Hauling Manager{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <h1 class="h3 mb-4">{{ 'profile.title'|trans }}</h1>
+
+            <div class="card mb-4">
+                <div class="card-header">{{ 'profile.email.title'|trans }}</div>
+                <div class="card-body">
+                    {{ form_start(emailForm, {attr: {novalidate: 'novalidate'}}) }}
+                        {{ form_rest(emailForm) }}
+                        <button class="btn btn-primary">{{ 'profile.email.submit'|trans }}</button>
+                    {{ form_end(emailForm) }}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">{{ 'profile.password.title'|trans }}</div>
+                <div class="card-body">
+                    {{ form_start(passwordForm, {attr: {novalidate: 'novalidate'}}) }}
+                        {{ form_rest(passwordForm) }}
+                        <button class="btn btn-primary">{{ 'profile.password.submit'|trans }}</button>
+                    {{ form_end(passwordForm) }}
+                </div>
+            </div>
+
+            <div class="card border-danger">
+                <div class="card-header text-danger">{{ 'profile.delete.title'|trans }}</div>
+                <div class="card-body">
+                    <p>{{ 'profile.delete.warning'|trans }}</p>
+                    {{ form_start(deletionForm, {attr: {novalidate: 'novalidate'}}) }}
+                        {{ form_rest(deletionForm) }}
+                        <button class="btn btn-danger">{{ 'profile.delete.submit'|trans }}</button>
+                    {{ form_end(deletionForm) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
