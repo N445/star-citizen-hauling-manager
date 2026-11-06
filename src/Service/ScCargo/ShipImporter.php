@@ -15,6 +15,7 @@ final readonly class ShipImporter
         private ScCargoShipParser $shipParser,
         private ShipRepository $shipRepository,
         private EntityManagerInterface $entityManager,
+        private ShipDoorCatalog $doorCatalog,
     ) {
     }
 
@@ -37,6 +38,7 @@ final readonly class ShipImporter
         $existing = $this->shipRepository->findSameAs($imported);
 
         if (null === $existing) {
+            $this->doorCatalog->applyTo($imported);
             $this->entityManager->persist($imported);
 
             return;

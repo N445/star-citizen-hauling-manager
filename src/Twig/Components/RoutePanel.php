@@ -65,7 +65,7 @@ final class RoutePanel
         $crates = null === $plan ? [] : array_map(fn (PlacedCrate $crate): array => $this->crateView($crate, $plan->currentStep), $plan->visibleCrates());
 
         return [
-            'doors' => array_map(static fn (DoorSide $door): string => $door->value, $this->tour->ship()?->doorSides() ?? []),
+            'doors' => array_map(static fn (DoorSide $door): string => $door->value, $this->tour->doorSides()),
             'currentStep' => $plan?->currentStep ?? 0,
             'unplaced' => $plan?->unplacedCount ?? 0,
             'stacked' => $plan?->stackedCount() ?? 0,

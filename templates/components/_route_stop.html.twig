@@ -1,5 +1,5 @@
 {% import '_icons.html.twig' as icons %}
-<li class="route-stop {{ stop.isDone ? 'route-stop--done' }} {{ movable ? 'route-stop--movable' }} {{ current ? 'route-stop--current' }} {{ isStart ? 'route-stop--start' }}" data-location="{{ stop.location }}"
+<li id="route-stop-{{ step }}" class="route-stop {{ stop.isDone ? 'route-stop--done' }} {{ movable ? 'route-stop--movable' }} {{ current ? 'route-stop--current' }} {{ isStart ? 'route-stop--start' }}" data-location="{{ stop.location }}"
     data-highlight-key="{{ step_token(step) }}" data-highlight-tokens="{{ step_token(step) }}" {% if current %}aria-current="step"{% endif %}>
     <div class="route-stop-head">
         {% if movable %}
@@ -26,7 +26,7 @@
                data-highlight-key="{{ delivery_token(delivery.id) }}"
                data-highlight-tokens="{{ [delivery_token(delivery.id), mission_token(delivery.mission.id), resource_token(delivery.resource), step_token(step)]|join(' ') }}">
             <input type="checkbox" class="form-check-input me-1" id="delivery-done-{{ delivery.id }}" {{ delivery.isDelivered ? 'checked' }}
-                   data-action="change->live#action" data-live-action-param="toggleDelivery" data-live-id-param="{{ delivery.id }}">
+                   data-action="change->live#action" data-live-action-param="toggleDelivery" data-track="stop-toggle" data-track-on="change" data-track-props='{"kind":"drop"}' data-live-id-param="{{ delivery.id }}">
             <span class="route-action-icon" aria-hidden="true">↓</span> {{ 'route.stop.drop'|trans({quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
             <span class="text-body-secondary">· {{ tour.missionLabel(delivery.mission) }}</span>
         </label>
@@ -37,7 +37,7 @@
                data-highlight-key="{{ mission_token(mission.id) }}"
                data-highlight-tokens="{{ ([mission_token(mission.id), step_token(step)]|merge(mission.deliveries|map(d => delivery_token(d.id)))|merge(mission.deliveries|map(d => resource_token(d.resource))))|join(' ') }}">
             <input type="checkbox" class="form-check-input me-1" id="pickup-done-{{ mission.id }}-{{ stop.location|lower|replace({' ': '-'}) }}" {{ pickedUp ? 'checked' }}
-                   data-action="change->live#action" data-live-action-param="togglePickup"
+                   data-action="change->live#action" data-live-action-param="togglePickup" data-track="stop-toggle" data-track-on="change" data-track-props='{"kind":"pickup"}'
                    data-live-mission-param="{{ mission.id }}" data-live-location-param="{{ stop.location }}">
             <span class="route-action-icon" aria-hidden="true">↑</span> {{ 'route.stop.pickup'|trans }} <span class="text-body-secondary">{{ tour.missionLabel(mission) }}</span>
             {% for delivery in mission.deliveries %}

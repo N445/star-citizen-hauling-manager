@@ -7,17 +7,70 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20261106160000 extends AbstractMigration
+final class Version20261106170000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Lieux en base (arbre système → planète → lieu → lune), semés depuis l\'ancien catalogue en dur';
+        return 'Schéma complet, ressources et lieux semés (fusion des anciennes migrations)';
     }
 
     public function up(Schema $schema): void
     {
+        $this->addSql('CREATE TABLE commodity (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(80) NOT NULL, color VARCHAR(7) NOT NULL, UNIQUE INDEX UNIQ_5E8D2F745E237E06 (name), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE delivery (id INT AUTO_INCREMENT NOT NULL, delivered TINYINT DEFAULT 0 NOT NULL, dropoff VARCHAR(120) NOT NULL, resource VARCHAR(80) NOT NULL, quantity INT NOT NULL, mission_id INT NOT NULL, INDEX IDX_3781EC10BE6CAE90 (mission_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE location (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(120) NOT NULL, parent_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_5E9E89CB727ACA705E237E06 (parent_id, name), INDEX IDX_5E9E89CB727ACA70 (parent_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE mission (id INT AUTO_INCREMENT NOT NULL, picked_up_at JSON NOT NULL, started_at DATETIME DEFAULT NULL, finished_at DATETIME DEFAULT NULL, cargo_placement JSON DEFAULT NULL, name VARCHAR(120) DEFAULT NULL, reward INT NOT NULL, type VARCHAR(20) NOT NULL, pickups JSON NOT NULL, tour_id INT NOT NULL, INDEX IDX_9067F23C15ED8D43 (tour_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE ship (id INT AUTO_INCREMENT NOT NULL, slug VARCHAR(120) NOT NULL, door_sides JSON NOT NULL, manufacturer VARCHAR(60) NOT NULL, name VARCHAR(80) NOT NULL, capacity INT NOT NULL, cargo_groups JSON NOT NULL, UNIQUE INDEX UNIQ_FA30EB24989D9B62 (slug), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE tour (id INT AUTO_INCREMENT NOT NULL, stop_order JSON DEFAULT NULL, guest_token VARCHAR(64) DEFAULT NULL, name VARCHAR(120) NOT NULL, ship_name VARCHAR(120) NOT NULL, capacity INT NOT NULL, start_location VARCHAR(120) DEFAULT NULL, owner_id INT DEFAULT NULL, ship_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_6AD1F9694AC9362F (guest_token), INDEX IDX_6AD1F9697E3C61F9 (owner_id), INDEX IDX_6AD1F969C256317D (ship_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE `user` (id INT AUTO_INCREMENT NOT NULL, registered_at DATETIME NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, email VARCHAR(180) NOT NULL, UNIQUE INDEX UNIQ_8D93D649E7927C74 (email), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('ALTER TABLE delivery ADD CONSTRAINT FK_3781EC10BE6CAE90 FOREIGN KEY (mission_id) REFERENCES mission (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE location ADD CONSTRAINT FK_5E9E89CB727ACA70 FOREIGN KEY (parent_id) REFERENCES location (id) ON DELETE CASCADE');
+        $this->addSql('ALTER TABLE mission ADD CONSTRAINT FK_9067F23C15ED8D43 FOREIGN KEY (tour_id) REFERENCES tour (id) ON DELETE CASCADE');
+        $this->addSql('ALTER TABLE tour ADD CONSTRAINT FK_6AD1F9697E3C61F9 FOREIGN KEY (owner_id) REFERENCES `user` (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE tour ADD CONSTRAINT FK_6AD1F969C256317D FOREIGN KEY (ship_id) REFERENCES ship (id) ON DELETE SET NULL');
+        $this->addSql(<<<'SQL'
+            INSERT INTO commodity (name, color) VALUES
+            ('Agricium', '#16a085'),
+            ('Agricultural Supplies', '#25b14e'),
+            ('Aluminum', '#7725b1'),
+            ('Aphorite', '#b19f25'),
+            ('Astatine', '#2599b1'),
+            ('Beryl', '#b12571'),
+            ('Bexalite', '#48b125'),
+            ('Borase', '#2b25b1'),
+            ('Chlorine', '#b15425'),
+            ('Construction Materials', '#25b17d'),
+            ('Copper', '#b87333'),
+            ('Corundum', '#94b125'),
+            ('Diamond', '#1f9fbf'),
+            ('Distilled Spirits', '#b12542'),
+            ('Dolivine', '#25b131'),
+            ('Fluorine', '#5a25b1'),
+            ('Gold', '#b8860b'),
+            ('Hadanite', '#25b1ab'),
+            ('Hephaestanite', '#b1258e'),
+            ('Hydrogen', '#2e86de'),
+            ('Iodine', '#253cb1'),
+            ('Janalite', '#b13725'),
+            ('Laranite', '#e67e22'),
+            ('Medical Supplies', '#d63031'),
+            ('Pressurized Ice', '#48a9c5'),
+            ('Processed Food', '#27ae60'),
+            ('Quantanium', '#8e44ad'),
+            ('Quartz', '#36b125'),
+            ('Recycled Material Composite', '#3d25b1'),
+            ('Revealer', '#b16625'),
+            ('Savrilium', '#25b18e'),
+            ('Scrap', '#8d6e63'),
+            ('Ship Ammunition', '#82b125'),
+            ('Stileron', '#2559b1'),
+            ('Stims', '#b12530'),
+            ('Taranite', '#25b143'),
+            ('Titanium', '#6c25b1'),
+            ('Tungsten', '#b19425'),
+            ('Vehicle Components', '#25a4b1'),
+            ('Waste', '#7a5c2e')
+            SQL);
         $this->addSql(<<<'SQL'
             INSERT INTO location (id, name, parent_id) VALUES
                 (1, 'Stanton', NULL),
@@ -155,6 +208,13 @@ final class Version20261106160000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP TABLE location');
+        $this->addSql('ALTER TABLE delivery DROP FOREIGN KEY FK_3781EC10BE6CAE90');
+        $this->addSql('ALTER TABLE location DROP FOREIGN KEY FK_5E9E89CB727ACA70');
+        $this->addSql('ALTER TABLE mission DROP FOREIGN KEY FK_9067F23C15ED8D43');
+        $this->addSql('ALTER TABLE tour DROP FOREIGN KEY FK_6AD1F9697E3C61F9');
+        $this->addSql('ALTER TABLE tour DROP FOREIGN KEY FK_6AD1F969C256317D');
+        foreach (['commodity', 'delivery', 'location', 'mission', 'ship', 'tour', '`user`'] as $table) {
+            $this->addSql('DROP TABLE '.$table);
+        }
     }
 }

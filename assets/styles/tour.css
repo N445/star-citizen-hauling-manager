@@ -216,7 +216,7 @@
 }
 
 /* Sticky panel: the stops scroll inside it instead of running past the bottom of the screen. */
-@media (min-width: 992px) {
+@media (min-width: 1200px) {
     .tour-page .route-panel {
         max-height: calc(100vh - 6rem);
     }
@@ -560,4 +560,232 @@
 
 .tour-page .tour-card__edit {
     line-height: 1;
+}
+
+/* ==========================================================================
+   Responsive: below xl the three panes become tabs (tour-tabs controller)
+   ========================================================================== */
+.tour-tabs {
+    display: none;
+}
+
+@media (max-width: 1199.98px) {
+    .hm-main:has(.tour-tabs) {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+    }
+
+    .tour-page .tour-pane {
+        display: none;
+    }
+
+    .tour-page[data-tab="missions"] > [data-pane="missions"],
+    .tour-page[data-tab="route"] > [data-pane="route"],
+    .tour-page[data-tab="cargo"] > [data-pane="cargo"] {
+        display: block;
+    }
+
+    .tour-tabs {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1020;
+        display: flex;
+        padding: 0.35rem max(0.5rem, env(safe-area-inset-right)) calc(0.35rem + env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+        gap: 0.35rem;
+        border-top: 1px solid var(--hm-border);
+        background: var(--hm-navbar-bg);
+        backdrop-filter: saturate(160%) blur(10px);
+        -webkit-backdrop-filter: saturate(160%) blur(10px);
+    }
+
+    .tour-tabs__tab {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1rem;
+        min-height: 3rem;
+        padding: 0.25rem;
+        border: 0;
+        border-radius: var(--hm-radius-sm);
+        background: transparent;
+        color: var(--hm-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: color var(--hm-duration-fast) var(--hm-ease), background-color var(--hm-duration-fast) var(--hm-ease);
+    }
+
+    .tour-tabs__tab .hm-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .tour-tabs__tab[aria-selected="true"] {
+        background: var(--hm-accent-soft);
+        color: var(--hm-accent);
+    }
+
+    .tour-tabs__tab:focus-visible {
+        outline-offset: -2px;
+    }
+
+    .hm-toasts {
+        bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+}
+
+/* Current stop shortcut, shown where the route is no longer beside the cargo hold */
+.tour-page .route-now {
+    display: none;
+}
+
+@media (max-width: 1199.98px) {
+    .tour-page .route-now {
+        position: sticky;
+        top: 0.5rem;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--tp-accent);
+        border-radius: var(--bs-border-radius);
+        background: color-mix(in srgb, var(--bs-body-bg) 88%, var(--tp-accent));
+        box-shadow: var(--hm-shadow);
+        color: var(--bs-body-color);
+        text-decoration: none;
+    }
+
+    .tour-page .route-now__label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tour-page .route-now__load {
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .tour-page .route-now {
+        top: 4.5rem;
+    }
+}
+
+/* Tablet: the route list reads better in two columns */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .tour-page .route {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 0.75rem;
+        align-items: start;
+    }
+
+    .tour-page .route-stop {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .tour-page .card-body {
+        padding: 0.75rem;
+    }
+
+    .tour-page .route-stop {
+        padding: 0.5rem;
+    }
+
+    .tour-page .route-stop-load {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    .tour-page .route-load-bar {
+        flex: 1;
+        width: auto;
+        max-width: 8rem;
+    }
+
+    .tour-page .route-panel .btn-group .btn,
+    .tour-page .btn-group .btn {
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
+    }
+
+    .tour-page .cargo-legend {
+        justify-content: flex-start;
+    }
+
+    .tour-page [data-controller~="cargo-grid"] > .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+
+/* Touch screens: 44px targets for stops, handles and checkboxes */
+@media (pointer: coarse) {
+    .tour-page .route-stop-handle {
+        width: 2.75rem;
+        height: 2.75rem;
+        margin: -0.6rem 0 -0.6rem -0.6rem;
+        font-size: 1.25rem;
+    }
+
+    .tour-page .route-action {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem 0.4rem;
+        min-height: 2.75rem;
+        padding: 0.4rem 0.5rem;
+    }
+
+    .tour-page .route-action .form-check-input {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        margin: 0;
+    }
+
+    .tour-page .route-action-detail {
+        flex-basis: 100%;
+        margin-left: 2.2rem;
+    }
+
+    .tour-page .mission-card-actions .btn {
+        --bs-btn-padding-y: 0.5rem;
+        --bs-btn-padding-x: 0.9rem;
+        min-height: 2.75rem;
+    }
+
+    .tour-page .btn-sm:not(.btn-link) {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
+    .tour-page .btn-link.btn-sm {
+        min-height: 2.75rem;
+        padding-inline: 0.5rem !important;
+    }
+
+    .tour-page .cargo-stage__reset {
+        padding: 0.65rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .tour-page .mission-card strong.text-truncate {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
 }

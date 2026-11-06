@@ -6,7 +6,7 @@
     {% import '_icons.html.twig' as icons %}
     <div class="hm-page-header">
         <h1 class="h3">{{ 'tour.list.title'|trans }}</h1>
-        <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
+        <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}" data-track="tour-new">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
     </div>
 
     {% if tours is empty %}
@@ -14,7 +14,7 @@
             <div class="hm-empty-icon">{{ icons.icon('brand') }}</div>
             <h2 class="h5">{{ 'tour.list.empty'|trans }}</h2>
             <p>{{ 'tour.list.empty_hint'|trans }}</p>
-            <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
+            <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}" data-track="tour-new">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
         </div>
     {% else %}
         <div class="list-group">

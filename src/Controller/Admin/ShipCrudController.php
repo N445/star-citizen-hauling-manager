@@ -86,8 +86,16 @@ final class ShipCrudController extends AbstractCrudController
             ->setFormTypeOptions([
                 'choice_translation_domain' => 'messages',
                 'getter' => static fn (Ship $ship): array => $ship->doorSides(),
-                'setter' => static fn (Ship $ship, array $doors) => $ship->changeDoors(array_values($doors)),
+                'setter' => static fn (Ship $ship, array $doors) => $ship->changeDoors(array_values($doors), $ship->mainDoor()),
                 'constraints' => [new Assert\Count(min: 1)],
+            ]);
+        yield ChoiceField::new('mainDoor', 'ship.main_door')
+            ->onlyOnForms()
+            ->setChoices(array_combine(array_map(static fn (DoorSide $door): string => $door->label(), DoorSide::cases()), DoorSide::cases()))
+            ->setFormTypeOptions([
+                'choice_translation_domain' => 'messages',
+                'getter' => static fn (Ship $ship): DoorSide => $ship->mainDoor(),
+                'setter' => static fn (Ship $ship, DoorSide $door) => $ship->changeMainDoor($door),
             ]);
         yield CodeEditorField::new('cargoGroups', 'ship.cargo_groups')
             ->onlyOnDetail()
@@ -97,6 +105,6 @@ final class ShipCrudController extends AbstractCrudController
 
     private function doorLabels(Ship $ship): string
     {
-        return implode(', ', array_map(fn (DoorSide $door): string => $this->translator->trans($door->label(), [], 'messages'), $ship->doorSides()));
+        return implode(', ', array_map(fn (DoorSide $door): string => $this->translator->trans($door->label(), [], 'messages').($door === $ship->mainDoor() ? ' ★' : ''), $ship->doorSides()));
     }
 }

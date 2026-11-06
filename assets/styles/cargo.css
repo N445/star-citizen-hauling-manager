@@ -270,3 +270,33 @@
         transition: none;
     }
 }
+
+/* Écrans tactiles : consigne adaptée, légende compacte, bouton de recentrage large */
+.cargo-stage__hint-touch,
+.is-touch .cargo-stage__hint-mouse {
+    display: none;
+}
+
+.is-touch .cargo-stage__hint-touch {
+    display: inline;
+}
+
+.cargo-stage__hint {
+    right: 3.5rem;
+    border-radius: var(--bs-border-radius);
+    line-height: 1.25;
+}
+
+@media (max-width: 575.98px) {
+    .cargo-body {
+        padding: 0.25rem;
+    }
+
+    .cargo-legend {
+        gap: 0.15rem 0.6rem;
+    }
+
+    .cargo-tooltip {
+        max-width: 12rem;
+    }
+}

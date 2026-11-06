@@ -22,6 +22,10 @@ class Tour
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $stopOrder = null;
 
+    /** @var list<string>|null portes choisies par le joueur pour cette tournée ; null = porte principale du vaisseau */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $doorSides = null;
+
     /** @var Collection<int, Mission> */
     #[ORM\OneToMany(targetEntity: Mission::class, mappedBy: 'tour', cascade: ['persist'], orphanRemoval: true)]
     #[ORM\OrderBy(['id' => 'ASC'])]
@@ -61,6 +65,40 @@ class Tour
         $this->capacity = $capacity;
         $this->ship = $ship;
         $this->startLocation = $startLocation;
+    }
+
+    /**
+     * @param list<DoorSide> $doors
+     */
+    public function overrideDoors(array $doors): void
+    {
+        $values = array_values(array_unique(array_map(static fn (DoorSide $door): string => $door->value, $doors)));
+        $default = array_map(static fn (DoorSide $door): string => $door->value, $this->defaultDoors());
+        sort($values);
+        sort($default);
+
+        $this->doorSides = [] === $values || $values === $default ? null : array_values(array_unique(array_map(static fn (DoorSide $door): string => $door->value, $doors)));
+    }
+
+    /**
+     * @return list<DoorSide>
+     */
+    public function doorSides(): array
+    {
+        return null === $this->doorSides ? $this->defaultDoors() : array_map(DoorSide::from(...), $this->doorSides);
+    }
+
+    /**
+     * @return list<DoorSide>
+     */
+    public function defaultDoors(): array
+    {
+        return [$this->ship?->mainDoor() ?? DoorSide::Rear];
+    }
+
+    public function hasDoorOverride(): bool
+    {
+        return null !== $this->doorSides;
     }
 
     /**

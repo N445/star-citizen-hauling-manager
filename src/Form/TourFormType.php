@@ -53,7 +53,7 @@ final class TourFormType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
                 'label_attr' => ['class' => 'checkbox-inline'],
-                'choice_attr' => static fn (): array => ['data-door-sides-target' => 'input', 'data-action' => 'door-sides#emit'],
+                'choice_attr' => static fn (): array => ['data-door-sides-target' => 'input', 'data-action' => 'door-sides#emit', 'data-track' => 'doors-change', 'data-track-on' => 'change'],
                 'help' => 'tour.form.door_sides_help',
             ]);
     }
@@ -74,7 +74,7 @@ final class TourFormType extends AbstractType
                 'text' => $ship->name(),
                 'capacity' => $ship->capacity(),
                 'cargoGroups' => $ship->cargoGroups(),
-                'doorSides' => array_map(static fn (DoorSide $side): string => $side->value, $ship->doorSides()),
+                'doorSides' => [$ship->mainDoor()->value],
             ],
             $this->shipRepository->findAllSorted(),
         );

@@ -64,6 +64,7 @@ ship:
     name: Nom
     capacity: Capacité (SCU)
     door_sides: Portes cargo
+    main_door: Porte principale
     cargo_groups: Grille cargo (JSON)
 
 commodity:

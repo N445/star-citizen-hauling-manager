@@ -33,7 +33,7 @@ final class TourData
         $data->shipName = $tour->shipName();
         $data->capacity = $tour->capacity();
         $data->startLocation = $tour->startLocation();
-        $data->doorSides = $tour->ship()?->doorSides() ?? [DoorSide::Rear];
+        $data->doorSides = $tour->doorSides();
 
         return $data;
     }

@@ -3,7 +3,7 @@
 <html lang="{{ app.request.locale }}" data-bs-theme="light">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="color-scheme" content="light dark">
         <title>{% block title %}Hauling Manager{% endblock %}</title>
         <script>
@@ -26,37 +26,42 @@
     </head>
     <body data-controller="highlight">
         <a class="visually-hidden-focusable hm-skip-link" href="#main">{{ 'nav.skip'|trans }}</a>
-        <nav class="navbar navbar-expand hm-navbar sticky-md-top mb-4" aria-label="{{ 'nav.main'|trans }}">
-            <div class="{{ block('main_class') }} flex-wrap gap-2">
+        <nav class="navbar navbar-expand-md hm-navbar sticky-md-top mb-3 mb-md-4" aria-label="{{ 'nav.main'|trans }}">
+            <div class="{{ block('main_class') }} gap-2">
                 <a class="navbar-brand hm-brand" href="{{ path('home') }}">
                     <span class="hm-brand-mark">{{ icons.icon('brand') }}</span>
                     <span>Hauling <span class="hm-brand-accent">Manager</span></span>
                 </a>
-                <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                    {{ include('_user_menu.html.twig', ignore_missing = true) }}
-                    <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'nav.language'|trans }}">
-                        {% for locale in app.enabled_locales %}
-                            {% set current = locale == app.request.locale %}
-                            <a class="btn btn-outline-secondary{{ current ? ' active' }}" href="{{ path('locale_switch', {locale: locale}) }}" hreflang="{{ locale }}" lang="{{ locale }}"{% if current %} aria-current="true"{% endif %}>{{ locale|upper }}</a>
-                        {% endfor %}
-                    </div>
-                    <div class="dropdown" data-controller="theme">
-                        <button class="btn btn-sm btn-outline-secondary hm-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.theme.label'|trans }}" title="{{ 'nav.theme.label'|trans }}">
-                            {{ icons.icon('sun', 'hm-theme-icon hm-theme-icon--light') }}
-                            {{ icons.icon('moon', 'hm-theme-icon hm-theme-icon--dark') }}
-                            {{ icons.icon('auto', 'hm-theme-icon hm-theme-icon--auto') }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end hm-theme-menu" role="menu">
-                            {% for choice, icon in {light: 'sun', dark: 'moon', auto: 'auto'} %}
-                                <li>
-                                    <button class="dropdown-item d-flex align-items-center gap-2" type="button" role="menuitemradio" aria-checked="false" data-theme-option="{{ choice }}" data-theme-target="option" data-action="theme#choose" data-theme-choice-param="{{ choice }}">
-                                        {{ icons.icon(icon) }}
-                                        <span class="flex-grow-1">{{ ('nav.theme.' ~ choice)|trans }}</span>
-                                        {{ icons.icon('check', 'hm-theme-check') }}
-                                    </button>
-                                </li>
+                <button class="navbar-toggler hm-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hm-nav" aria-controls="hm-nav" aria-expanded="false" aria-label="{{ 'nav.toggle'|trans }}">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse hm-nav-collapse" id="hm-nav">
+                    <div class="d-flex align-items-center flex-wrap gap-2 ms-md-auto hm-nav-tools py-2 py-md-0">
+                        {{ include('_user_menu.html.twig', ignore_missing = true) }}
+                        <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'nav.language'|trans }}">
+                            {% for locale in app.enabled_locales %}
+                                {% set current = locale == app.request.locale %}
+                                <a class="btn btn-outline-secondary{{ current ? ' active' }}" href="{{ path('locale_switch', {locale: locale}) }}" hreflang="{{ locale }}" lang="{{ locale }}" data-track="locale-switch" data-track-props='{"locale":"{{ locale }}"}'{% if current %} aria-current="true"{% endif %}>{{ locale|upper }}</a>
                             {% endfor %}
-                        </ul>
+                        </div>
+                        <div class="dropdown" data-controller="theme">
+                            <button class="btn btn-sm btn-outline-secondary hm-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.theme.label'|trans }}" title="{{ 'nav.theme.label'|trans }}">
+                                {{ icons.icon('sun', 'hm-theme-icon hm-theme-icon--light') }}
+                                {{ icons.icon('moon', 'hm-theme-icon hm-theme-icon--dark') }}
+                                {{ icons.icon('auto', 'hm-theme-icon hm-theme-icon--auto') }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end hm-theme-menu" role="menu">
+                                {% for choice, icon in {light: 'sun', dark: 'moon', auto: 'auto'} %}
+                                    <li>
+                                        <button class="dropdown-item d-flex align-items-center gap-2" type="button" role="menuitemradio" aria-checked="false" data-theme-option="{{ choice }}" data-track="theme-switch" data-track-props='{"theme":"{{ choice }}"}' data-theme-target="option" data-action="theme#choose" data-theme-choice-param="{{ choice }}">
+                                            {{ icons.icon(icon) }}
+                                            <span class="flex-grow-1">{{ ('nav.theme.' ~ choice)|trans }}</span>
+                                            {{ icons.icon('check', 'hm-theme-check') }}
+                                        </button>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -76,5 +81,6 @@
         <main id="main" class="{% block main_class %}container{% endblock %} hm-main pb-5" tabindex="-1">
             {% block body %}{% endblock %}
         </main>
+        {% if umami_website_id %}<script defer src="{{ path('stats_script') }}" data-website-id="{{ umami_website_id }}" data-host-url="/_s" data-do-not-track="true"></script>{% endif %}
     </body>
 </html>

@@ -64,6 +64,7 @@ ship:
     name: Name
     capacity: Capacity (SCU)
     door_sides: Cargo doors
+    main_door: Main door
     cargo_groups: Cargo grid (JSON)
 
 commodity:

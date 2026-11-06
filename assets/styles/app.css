@@ -686,8 +686,13 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
    ========================================================================== */
 /* Empilement : panneaux collants (1010) < toasts (1015) < listes Tom Select (1025) < barre de navigation (1030). */
 .cargo-panel {
-    top: 5rem;
     z-index: 1010;
+}
+
+@media (min-width: 1200px) {
+    .cargo-panel {
+        top: 5rem;
+    }
 }
 
 [data-cargo-grid-target="canvas"] canvas {
@@ -839,4 +844,205 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
 
 .hm-list-row > .flex-grow-1 {
     min-width: 0;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3, h4, .card-header {
+    overflow-wrap: anywhere;
+}
+
+.hm-navbar-toggler {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border-color: var(--hm-border);
+    color: var(--hm-text);
+}
+
+.hm-navbar-toggler .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%238b9aab' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+@media (max-width: 767.98px) {
+    .hm-navbar {
+        position: sticky;
+        top: 0;
+    }
+
+    .hm-nav-collapse.show,
+    .hm-nav-collapse.collapsing {
+        border-top: 1px solid var(--hm-border);
+        margin-top: 0.5rem;
+    }
+
+    .hm-nav-tools {
+        width: 100%;
+    }
+
+    .hm-nav-tools .navbar-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .hm-navbar .navbar-nav .nav-link,
+    .hm-navbar .btn {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .hm-navbar .btn-group-sm > .btn {
+        min-width: 2.75rem;
+        justify-content: center;
+    }
+
+    .hm-navbar .hm-icon-btn {
+        min-width: 2.75rem;
+        justify-content: center;
+    }
+
+    .hm-navbar .dropdown-item {
+        min-height: 2.75rem;
+        align-items: center;
+    }
+
+    .hm-page-header .btn {
+        min-height: 2.75rem;
+    }
+
+    .hm-auth {
+        margin-top: 0.5rem;
+    }
+
+    .hm-auth .card-body {
+        padding: 1.25rem;
+    }
+
+    .hm-list-row {
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .hm-list-row > .small {
+        max-width: 7rem;
+    }
+
+    .hm-list-row .text-truncate {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+
+/* Tables turned into stacked cards on narrow screens */
+@media (max-width: 767.98px) {
+    .hm-table-cards thead {
+        display: none;
+    }
+
+    .hm-table-cards,
+    .hm-table-cards tbody,
+    .hm-table-cards tr,
+    .hm-table-cards td {
+        display: block;
+        width: 100%;
+    }
+
+    .hm-table-cards tr {
+        padding: 0.5rem 0.875rem;
+        border-bottom: 1px solid var(--hm-border);
+    }
+
+    .hm-table-cards tr:last-child {
+        border-bottom: 0;
+    }
+
+    .hm-table-cards td {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.2rem 0;
+        border: 0;
+        background: transparent;
+        text-align: right !important;
+        box-shadow: none;
+        overflow-wrap: anywhere;
+    }
+
+    .hm-table-cards td::before {
+        flex-shrink: 0;
+        color: var(--hm-text-muted);
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+}
+
+/* Touch screens: 16px inputs (no iOS zoom on focus), 44px targets, roomier Tom Select lists */
+@media (pointer: coarse) {
+    .form-control,
+    .form-select,
+    .ts-wrapper .ts-control,
+    .ts-wrapper .ts-control > input {
+        font-size: 1rem;
+    }
+
+    .form-control,
+    .form-select,
+    .ts-wrapper .ts-control {
+        min-height: 2.75rem;
+    }
+
+    .btn:not(.btn-sm):not(.btn-group-sm > .btn) {
+        min-height: 2.75rem;
+    }
+
+    .hm-navbar .btn,
+    .hm-navbar .nav-link {
+        min-height: 2.75rem;
+    }
+
+    .ts-dropdown .option,
+    .ts-dropdown .create,
+    .ts-dropdown .no-results {
+        padding: 0.7rem 0.75rem;
+    }
+
+    .ts-dropdown .optgroup-header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .ts-dropdown .ts-dropdown-content {
+        max-height: min(18rem, 45vh);
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+.ts-dropdown {
+    max-width: calc(100vw - 1rem);
+}
+
+.ts-wrapper {
+    scroll-margin-top: 4.5rem;
+}
+
+@media (max-width: 575.98px) {
+    .hm-stat {
+        padding: 0.75rem;
+    }
+
+    .hm-stat-value {
+        font-size: 1.15rem;
+    }
 }

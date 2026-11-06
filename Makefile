@@ -4,7 +4,7 @@ DC := docker compose $(ENV_FILES)
 IMAGE ?= $(shell sed -n 's/^IMAGE=//p' .env)
 TAG   ?= $(shell git rev-parse --short HEAD)
 
-.PHONY: examples watch up start down logs sh install ships test lint phpunit build-prod
+.PHONY: examples watch up start down logs sh install ships doors init test lint phpunit build-prod
 
 up: start install
 
@@ -31,6 +31,12 @@ watch:
 
 ships:
 	$(DC) exec -T php bin/console app:ships:import
+
+doors:
+	$(DC) exec -T php bin/console app:ships:doors
+
+# Première installation : pile Docker, dépendances, migrations (lieux et ressources inclus), vaisseaux et leurs portes
+init: up ships doors
 
 examples:
 	$(DC) exec -T php bin/console app:examples:load

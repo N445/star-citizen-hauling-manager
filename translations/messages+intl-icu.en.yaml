@@ -1,4 +1,5 @@
 nav:
+    toggle: Toggle menu
     language: Language
     main: Main navigation
     skip: Skip to content
@@ -26,6 +27,11 @@ flash:
         saved: Tour saved.
 
 tour:
+    tabs:
+        aria: Tour sections
+        missions: Missions
+        route: Route
+        cargo: Cargo
     new: New tour
     guest:
         replace_hint: "Without an account you keep a single tour: a new one replaces this one. Sign up to keep your history."
@@ -43,6 +49,8 @@ tour:
         edit: 'Edit tour'
         capacity: 'Capacity'
         doors: 'Cargo doors'
+        doors_custom: customised
+        door_main: "Main door"
         no_start: 'Not set'
         off_catalogue: 'Not in the catalogue: no cargo grid.'
     form:
@@ -50,8 +58,8 @@ tour:
         ship: Ship
         capacity: Capacity (SCU)
         start_location: Starting point
-        door_sides: Ship cargo doors
-        door_sides_help: Saved on the ship. Crates delivered first are placed near a door.
+        door_sides: Cargo doors used
+        door_sides_help: "Doors for this tour only. Default: the ship's main door, filled in when you pick the ship. Crates delivered first are placed near a door."
         save: Save tour
         create: Create tour
 
@@ -116,6 +124,7 @@ cargo:
     title: Cargo grid
     scale: 1 cell = 1 SCU
     controls: 'Drag: rotate · right-drag: pan · wheel: zoom'
+    controls_touch: 'Swipe sideways: rotate · two fingers: zoom and tilt · swipe up/down: scroll the page'
     no_grid: 'Pick a ship from the catalog to see its cargo grid.'
     empty_title: No cargo grid yet
     reset_view: Reset view

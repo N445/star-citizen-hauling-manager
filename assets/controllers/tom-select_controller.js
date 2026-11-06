@@ -24,8 +24,16 @@ export default class extends Controller {
             dropdownParent: 'body',
             onChange: (value) => this.changed(value),
             onItemAdd: () => this.clearSearch(),
+            onDropdownOpen: () => this.reveal(),
             render: this.badgesValue ? this.badgeRenderers() : this.plainRenderers(),
         });
+    }
+
+    // Touch screens: bring the field to the top so the list (and the keyboard) do not hide it.
+    reveal() {
+        if (matchMedia('(pointer: coarse)').matches) {
+            this.tomSelect.wrapper.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
     }
 
     clearSearch() {

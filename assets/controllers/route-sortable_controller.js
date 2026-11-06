@@ -1,6 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 import { getComponent } from '@symfony/ux-live-component';
 import Sortable from 'sortablejs';
+import { track } from '../stats.js';
 
 const MOVABLE = '.route-stop--movable';
 
@@ -10,6 +11,11 @@ export default class extends Controller {
         this.sortable = Sortable.create(this.element, {
             draggable: MOVABLE,
             handle: '.route-stop-handle',
+            delay: 120,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 6,
+            fallbackTolerance: 4,
+            scrollSensitivity: 90,
             animation: reduce ? 0 : 180,
             easing: 'cubic-bezier(0.2, 0, 0, 1)',
             ghostClass: 'route-stop--ghost',
@@ -49,6 +55,7 @@ export default class extends Controller {
         const locations = [...this.element.querySelectorAll('.route-stop:not(.route-stop--start)')].map((element) => element.dataset.location);
         const component = await getComponent(this.element.closest('[data-controller~="live"]'));
         await component.action('reorder', { locations: JSON.stringify(locations) });
+        track('route-reorder');
 
         if (refocus) {
             this.focusHandle(stop.dataset.location);

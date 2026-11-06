@@ -39,7 +39,7 @@ final class CargoPlanner
             return CargoPlan::empty();
         }
 
-        $this->space = CargoSpace::fromGroups($tour->ship()->cargoGroups(), $tour->ship()->doorSides());
+        $this->space = CargoSpace::fromGroups($tour->ship()->cargoGroups(), $tour->doorSides());
         $steps = $route->stops;
         $this->dropSteps = $this->dropSteps($steps);
 

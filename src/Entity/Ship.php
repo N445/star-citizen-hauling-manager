@@ -24,9 +24,13 @@ class Ship
     #[ORM\Column(length: 120, unique: true)]
     private string $slug;
 
-    /** @var list<string> côtés des portes cargo, saisis par l'utilisateur (absents de sc-cargo.space) */
+    /** @var list<string> côtés des portes cargo du vaisseau (absents de sc-cargo.space) */
     #[ORM\Column(type: Types::JSON)]
     private array $doorSides = [DoorSide::Rear->value];
+
+    /** porte utilisée par défaut par une tournée ; toujours l'une des portes du vaisseau */
+    #[ORM\Column(length: 10)]
+    private string $mainDoor = DoorSide::Rear->value;
 
     /**
      * @param list<CargoGroup> $cargoGroups grille officielle de sc-cargo.space, axes source : x largeur, y hauteur, z longueur
@@ -55,9 +59,20 @@ class Ship
     /**
      * @param list<DoorSide> $doors
      */
-    public function changeDoors(array $doors): void
+    public function changeDoors(array $doors, ?DoorSide $main = null): void
     {
         $this->doorSides = array_values(array_unique(array_map(static fn (DoorSide $door): string => $door->value, $doors)));
+        $this->mainDoor = null !== $main && \in_array($main->value, $this->doorSides, true) ? $main->value : ($this->doorSides[0] ?? DoorSide::Rear->value);
+    }
+
+    public function changeMainDoor(DoorSide $main): void
+    {
+        $this->changeDoors([...$this->doorSides(), $main], $main);
+    }
+
+    public function mainDoor(): DoorSide
+    {
+        return DoorSide::from($this->mainDoor);
     }
 
     /**

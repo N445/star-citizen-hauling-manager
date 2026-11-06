@@ -27,7 +27,7 @@
                         <input class="form-control" type="password" id="password" name="_password" autocomplete="current-password" required>
                     </div>
                     <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
-                    <button class="btn btn-primary w-100" type="submit">{{ 'login.submit'|trans }}</button>
+                    <button class="btn btn-primary w-100" type="submit" data-track="login-submit">{{ 'login.submit'|trans }}</button>
                 </form>
             </div>
         </div>

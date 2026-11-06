@@ -58,7 +58,7 @@ final readonly class TourWriter
     private function newTour(TourData $data): Tour
     {
         $tour = new Tour($data->name, $data->shipName, $data->capacity, $this->shipRepository->findOneByFullName($data->shipName), $data->startLocation);
-        $tour->ship()?->changeDoors($data->doorSides);
+        $tour->overrideDoors($data->doorSides);
 
         return $tour;
     }
@@ -80,7 +80,7 @@ final readonly class TourWriter
     public function update(Tour $tour, TourData $data): void
     {
         $tour->update($data->name, $data->shipName, $data->capacity, $this->shipRepository->findOneByFullName($data->shipName), $data->startLocation);
-        $tour->ship()?->changeDoors($data->doorSides);
+        $tour->overrideDoors($data->doorSides);
         $this->entityManager->flush();
     }
 }

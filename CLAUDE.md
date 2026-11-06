@@ -107,7 +107,7 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
   SCU, dimensions L×l×h du jeu, découpage glouton puis moitié si pas de place, `minSize`/`maxSize` par grille) au
   point libre et soutenu dont la profondeur (0 = porte, 1 = fond, depuis la porte la plus proche parmi
   `Ship::doorSides`, plusieurs possibles, saisies par l'utilisateur car absentes de sc-cargo.space et conservées à
-  l'import ; Caterpillar = gauche + droite) est la plus proche de la cible « façon livreur » : rang de sa livraison parmi les
+  l'import ; Caterpillar = gauche + droite, cf. Portes cargo) est la plus proche de la cible « façon livreur » : rang de sa livraison parmi les
   livraisons encore à venir (la prochaine → porte, la dernière → fond). Priorités du choix (`CargoSpace::score`) :
   1) ne pas être **posée sur** une caisse livrée avant, 2) ne pas lui couper l'accès depuis **toutes** les portes,
   3) près des caisses de **même destination** s'il y en a à bord (sinon la profondeur cible), 4) le plus bas. Si poser dessus est inévitable, on tente deux demi-caisses ; sinon la caisse est marquée
@@ -124,6 +124,26 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
   (une méthode publique typée `Route` casse le conteneur) : pas d'argument objet sur les méthodes publiques.
 - Front : `tom-select_controller.js` (création libre partout, ré-émet un `change` qui bulle), `ship-capacity_controller.js`
   (SCU pré-rempli, éditable), `cargo-grid_controller.js` (soute en 3D three.js + OrbitControls : sol gris de chaque grille, double flèche orange au sol côté porte, caisses ; rendu à la demande ; suit le champ `[data-ship-name]`).
+
+- **Portes cargo** : `Ship::doorSides` = portes du vaisseau (plusieurs possibles), `Ship::mainDoor` = la principale (toujours
+  l'une d'elles ; admin : champ « Porte principale »). Une tournée utilise **sa porte principale seule** par défaut ;
+  `Tour::doorSides` (JSON nullable) est la surcharge du joueur, choisie dans le formulaire de tournée sans toucher au
+  vaisseau (`Tour::overrideDoors` remet null si le choix égale le défaut ; `Tour::doorSides()` donne les portes effectives,
+  utilisées par `CargoPlanner`, `RoutePanel` et les tests). Données connues : `ShipDoorCatalog` (seul le Caterpillar,
+  gauche + droite, principale gauche ; tout le reste = arrière, à corriger dans l'admin), appliqué aux vaisseaux neufs par
+  `ShipImporter` et à tous par `bin/console app:ships:doors`.
+- **Première installation** : `make init` = `up` + import des vaisseaux (réseau requis) + portes connues. Lieux et ressources
+  viennent des migrations (une seule migration de base `Version20261106170000`, puis les suivantes : toute base migrée avant
+  cette fusion doit voir sa table `doctrine_migration_versions` réécrite à la main).
+- **Statistiques Umami** (auto-hébergé) : `UMAMI_URL` + `UMAMI_WEBSITE_ID` dans `.env.local` / l'environnement de prod ;
+  vides = rien n'est émis. Le navigateur ne parle qu'à notre domaine : `StatsProxyController` sert le script sous `/_s/s.js`
+  (récupéré chez Umami, en cache 1 h, chemin `/api/send` renommé `/c` contre les bloqueurs de pub) et relaie `POST /_s/c`
+  vers `{UMAMI_URL}/api/send` avec l'adresse (dernier `X-Forwarded-For`) et le User-Agent du visiteur ; événement refusé si
+  `website` ≠ `UMAMI_WEBSITE_ID`. Événements : attribut `data-track="nom"` (+ `data-track-on="change"`,
+  `data-track-props='{...}'`) sur n'importe quel élément, écouté par délégation dans `assets/stats.js` (survit aux rendus
+  Live Component) ; en JS : `track('nom')`. Posés : `tour-create/save/new`, `mission-add/update/edit`, `route-mode`,
+  `route-reorder`, `route-reset-order`, `stop-toggle`, `doors-change`, `cargo-reset-view`, `tour-tab`, `locale-switch`,
+  `theme-switch`, `login-submit`, `register-submit` (clics/envois, pas résultats validés).
 
 ## Tests de philosophie
 `tests/Philosophy/` (~1 170 tests, ~6 s) : invariants du parcours et de la soute sur ~350 cas générés à graine fixe

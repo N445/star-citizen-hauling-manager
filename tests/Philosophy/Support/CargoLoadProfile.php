@@ -38,12 +38,12 @@ final readonly class CargoLoadProfile
 
     public function hasSingleHorizontalDoor(): bool
     {
-        return 1 === \count($this->tour->ship()->doorSides()) && $this->hasOnlyHorizontalDoors();
+        return 1 === \count($this->tour->doorSides()) && $this->hasOnlyHorizontalDoors();
     }
 
     public function hasOnlyHorizontalDoors(): bool
     {
-        $verticalDoors = array_filter($this->tour->ship()->doorSides(), static fn (DoorSide $door): bool => 'y' === $door->axis());
+        $verticalDoors = array_filter($this->tour->doorSides(), static fn (DoorSide $door): bool => 'y' === $door->axis());
 
         return [] === $verticalDoors;
     }

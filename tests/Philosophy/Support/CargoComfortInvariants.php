@@ -44,7 +44,7 @@ final readonly class CargoComfortInvariants
 
     public function assertEarlierDeliveriesCloserToTheDoor(): void
     {
-        $door = $this->tour->ship()->doorSides()[0];
+        $door = $this->tour->doorSides()[0];
 
         foreach ($this->timeline->steps() as $step) {
             $this->assertAccessOrderAt($step, $door);

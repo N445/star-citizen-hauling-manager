@@ -98,6 +98,8 @@ export default class extends Controller {
         this.raycaster = new THREE.Raycaster();
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.coarse = window.matchMedia('(pointer: coarse)');
+        this.applyTouchMode();
         this.controls.addEventListener('change', () => this.draw());
         this.controls.addEventListener('start', () => {
             this.userMoved = true;
@@ -109,15 +111,21 @@ export default class extends Controller {
         this.darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
         this.onThemeChange = () => this.applyTheme();
         this.onPointerMove = (event) => this.pointAt(event);
-        this.onPointerLeave = () => this.leave();
+        this.onPointerLeave = (event) => event.pointerType !== 'touch' && this.leave();
         window.addEventListener('theme:change', this.onThemeChange);
         this.darkScheme.addEventListener('change', this.onThemeChange);
         this.themeObserver = new MutationObserver(this.onThemeChange);
         this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
         this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
         this.renderer.domElement.addEventListener('pointerleave', this.onPointerLeave);
-        this.resizeObserver = new ResizeObserver(() => this.resize());
+        this.onViewportChange = () => this.resize();
+        this.onPointerUp = (event) => this.tapAt(event);
+        this.renderer.domElement.addEventListener('pointerdown', (event) => { this.downAt = [event.clientX, event.clientY]; });
+        this.renderer.domElement.addEventListener('pointerup', this.onPointerUp);
+        this.resizeObserver = new ResizeObserver(this.onViewportChange);
         this.resizeObserver.observe(this.canvasTarget);
+        window.addEventListener('resize', this.onViewportChange);
+        this.coarse.addEventListener('change', () => this.applyTouchMode());
 
         this.applyTheme(false);
         this.readInitialPlan();
@@ -132,6 +140,7 @@ export default class extends Controller {
         this.darkScheme.removeEventListener('change', this.onThemeChange);
         this.themeObserver.disconnect();
         this.resizeObserver.disconnect();
+        window.removeEventListener('resize', this.onViewportChange);
         this.controls.dispose();
         this.dispose(this.scene);
         this.scene.clear();
@@ -467,8 +476,25 @@ export default class extends Controller {
         );
     }
 
-    pointAt(event) {
-        if (event.buttons !== 0) {
+    // Finger: one-finger vertical swipes scroll the page (touch-action: pan-y), sideways swipes orbit, two fingers zoom and tilt.
+    applyTouchMode() {
+        const touch = this.coarse.matches;
+        this.renderer.domElement.style.touchAction = touch ? 'pan-y' : 'none';
+        this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: touch ? THREE.TOUCH.DOLLY_ROTATE : THREE.TOUCH.DOLLY_PAN };
+        this.element.classList.toggle('is-touch', touch);
+    }
+
+    // No hover on a touchscreen: a tap on a crate shows its tooltip, a tap elsewhere hides it.
+    tapAt(event) {
+        if (event.pointerType !== 'touch' || !this.downAt || Math.hypot(event.clientX - this.downAt[0], event.clientY - this.downAt[1]) > 8) {
+            return;
+        }
+
+        this.pointAt(event, true);
+    }
+
+    pointAt(event, tap = false) {
+        if (event.buttons !== 0 && !tap) {
             return;
         }
 
@@ -603,7 +629,8 @@ export default class extends Controller {
             return;
         }
 
-        const height = Math.round(Math.min(width * 0.85, window.innerHeight * 0.7));
+        const share = window.innerWidth < 1200 ? 0.6 : 0.7;
+        const height = Math.round(Math.max(220, Math.min(width * (width < 576 ? 1.15 : 0.85), window.innerHeight * share)));
 
         if (width === this.size.width && height === this.size.height) {
             return;

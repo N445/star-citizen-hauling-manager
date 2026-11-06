@@ -1,4 +1,5 @@
 nav:
+    toggle: Afficher le menu
     language: Langue
     main: Navigation principale
     skip: Aller au contenu
@@ -26,6 +27,11 @@ flash:
         saved: Tournée enregistrée.
 
 tour:
+    tabs:
+        aria: Sections de la tournée
+        missions: Missions
+        route: Parcours
+        cargo: Soute
     guest:
         replace_hint: "Sans compte, tu gardes une seule tournée : une nouvelle remplace celle-ci. Inscris-toi pour garder ton historique."
         account_hint: "Pas besoin de compte. Inscris-toi plus tard pour garder ta tournée et l'historique de tes missions."
@@ -43,6 +49,8 @@ tour:
         edit: 'Modifier la tournée'
         capacity: 'Capacité'
         doors: 'Portes cargo'
+        doors_custom: personnalisées
+        door_main: "Porte principale"
         no_start: 'Non défini'
         off_catalogue: 'Hors catalogue : pas de grille cargo.'
     form:
@@ -50,8 +58,8 @@ tour:
         ship: Vaisseau
         capacity: Capacité (SCU)
         start_location: Point de départ
-        door_sides: Portes cargo du vaisseau
-        door_sides_help: Enregistré sur le vaisseau. Les caisses livrées en premier sont placées près d'une porte.
+        door_sides: Portes cargo utilisées
+        door_sides_help: "Portes pour cette tournée seulement. Par défaut : la porte principale du vaisseau, remplie au choix du vaisseau. Les caisses livrées en premier sont placées près d'une porte."
         save: Enregistrer la tournée
         create: Créer la tournée
 
@@ -116,6 +124,7 @@ cargo:
     title: Soute
     scale: 1 case = 1 SCU
     controls: 'Glisser : tourner · clic droit : déplacer · molette : zoom'
+    controls_touch: 'Balayer de côté : tourner · deux doigts : zoom et inclinaison · balayer en hauteur : faire défiler la page'
     no_grid: 'Choisis un vaisseau du catalogue pour voir sa grille cargo.'
     empty_title: Pas encore de grille cargo
     reset_view: Recentrer la vue

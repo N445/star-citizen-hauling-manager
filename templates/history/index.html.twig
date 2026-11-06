@@ -16,7 +16,7 @@
             ('history.total.reward'|trans): 'history.reward'|trans({amount: totalReward}),
             ('history.total.duration'|trans): totalDuration|duration,
         } %}
-            <div class="col-sm-4">
+            <div class="col-6 col-sm-4">
                 <div class="hm-stat">
                     <div class="hm-eyebrow">{{ label }}</div>
                     <div class="hm-stat-value">{{ value }}</div>
@@ -34,7 +34,7 @@
     {% else %}
         <div class="card">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 hm-table-cards">
                     <thead>
                         <tr class="hm-eyebrow">
                             <th>{{ 'history.column.tour'|trans }}</th>
@@ -48,12 +48,12 @@
                     <tbody>
                         {% for mission in missions %}
                             <tr>
-                                <td><a href="{{ path('tour', {id: mission.tour.id}) }}">{{ mission.tour.name }}</a></td>
-                                <td>{{ mission.tour.missionLabel(mission) }}</td>
-                                <td class="text-body-secondary">{{ mission.type.shortLabel|trans(domain: 'messages') }}</td>
-                                <td class="text-end fw-semibold text-nowrap">{{ 'history.reward'|trans({amount: mission.reward}) }}</td>
-                                <td class="text-nowrap">{{ 'history.finished_at'|trans({date: mission.finishedAt}) }}</td>
-                                <td class="text-end text-nowrap">{{ mission.durationInSeconds is null ? '—' : mission.durationInSeconds|duration }}</td>
+                                <td data-label="{{ 'history.column.tour'|trans }}"><a href="{{ path('tour', {id: mission.tour.id}) }}">{{ mission.tour.name }}</a></td>
+                                <td data-label="{{ 'history.column.mission'|trans }}">{{ mission.tour.missionLabel(mission) }}</td>
+                                <td data-label="{{ 'history.column.type'|trans }}" class="text-body-secondary">{{ mission.type.shortLabel|trans(domain: 'messages') }}</td>
+                                <td data-label="{{ 'history.column.reward'|trans }}" class="text-end fw-semibold text-nowrap">{{ 'history.reward'|trans({amount: mission.reward}) }}</td>
+                                <td data-label="{{ 'history.column.finished_at'|trans }}" class="text-nowrap">{{ 'history.finished_at'|trans({date: mission.finishedAt}) }}</td>
+                                <td data-label="{{ 'history.column.duration'|trans }}" class="text-end text-nowrap">{{ mission.durationInSeconds is null ? '—' : mission.durationInSeconds|duration }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

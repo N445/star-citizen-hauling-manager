@@ -1,5 +1,5 @@
 {% import '_icons.html.twig' as icons %}
-<div {{ attributes.defaults({class: 'card sticky-lg-top cargo-panel route-panel'}) }}>
+<div {{ attributes.defaults({class: 'card sticky-xl-top cargo-panel route-panel'}) }}>
     <div class="card-header d-flex align-items-center gap-2" data-loading="delay(150)|addClass(is-loading)">
         <span class="step-badge" aria-hidden="true">3</span>
         <span>{{ 'route.title'|trans }}</span>
@@ -7,17 +7,25 @@
     </div>
     <div class="card-body route-panel-body" data-loading="delay(150)|addClass(is-busy)">
         {% set route = computed.route %}
+        {% set cargo = this.cargoView %}
         {% set locked = route is not null and route.started %}
+        {% set currentStop = route is not null and tour.missions is not empty and not route.isFinished ? route.stops|slice(cargo.currentStep, 1)|first : null %}
+        {% if currentStop %}
+            <a class="route-now" href="#route-stop-{{ cargo.currentStep }}" data-controller="route-now" data-action="route-now#jump">
+                <span class="badge route-stop-badge">{{ 'route.stop.current'|trans }}</span>
+                <strong class="route-now__label">{{ currentStop.location }}</strong>
+                {% if currentStop.load is not null %}<span class="route-now__load text-body-secondary">{{ currentStop.load }}/{{ tour.capacity }} SCU</span>{% endif %}
+            </a>
+        {% endif %}
         <div class="btn-group w-100 mb-2" role="group" aria-label="{{ 'route.mode.aria'|trans }}">
             {% for routeMode in enum_cases('App\\Service\\Route\\RouteMode') %}
                 <input type="radio" class="btn-check" name="route-mode" id="route-mode-{{ routeMode.value }}" value="{{ routeMode.value }}"
-                       data-model="mode" {{ mode == routeMode ? 'checked' }} {{ locked ? 'disabled' }}>
+                       data-model="mode" data-track="route-mode" data-track-on="change" data-track-props='{"mode":"{{ routeMode.value }}"}' {{ mode == routeMode ? 'checked' }} {{ locked ? 'disabled' }}>
                 <label class="btn btn-sm btn-outline-primary" for="route-mode-{{ routeMode.value }}">{{ routeMode.label|trans }}</label>
             {% endfor %}
         </div>
         <p class="small text-body-secondary">{% if locked %}🔒 {% endif %}{{ (locked ? 'route.locked' : mode.description)|trans }}</p>
 
-        {% set cargo = this.cargoView %}
         <div hidden data-controller="cargo-plan" data-cargo-plan-plan-value="{{ cargo|json_encode }}"></div>
         {% if cargo.stacked > 0 %}
             <div class="alert alert-warning py-2 small">{{ 'cargo.warning.stacked'|trans({count: cargo.stacked}) }}</div>
@@ -41,7 +49,7 @@
                 <span><strong>{{ 'route.stop_count'|trans({count: route.moveCount}) }}</strong>
                     {% if route.start is null %}<small class="text-body-secondary">— {{ 'route.no_start'|trans }}</small>{% endif %}</span>
                 {% if route.customOrder %}
-                    <button type="button" class="btn btn-sm btn-link p-0" data-action="live#action" data-live-action-param="resetOrder">↺ {{ 'route.reset_order'|trans }}</button>
+                    <button type="button" class="btn btn-sm btn-link p-0" data-action="live#action" data-live-action-param="resetOrder" data-track="route-reset-order">↺ {{ 'route.reset_order'|trans }}</button>
                 {% endif %}
             </div>
             <div class="route-legend small text-body-secondary mb-2" aria-hidden="true">
