@@ -52,3 +52,27 @@ jobs:
             ghcr.io/n445/star-citizen-hauling-manager:${{ steps.sha.outputs.court }}
           cache-from: type=gha,scope=prod
           cache-to: type=gha,scope=prod,mode=max
+
+  deploy:
+    name: Déployer sur le NAS
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, nas]
+    permissions:
+      contents: read
+    env:
+      DEPLOY_DIR: /home/nas/web/schm
+    steps:
+      - uses: actions/checkout@v4
+      - id: sha
+        run: echo "court=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Mettre à jour les fichiers du serveur
+        run: |
+          test -f "$DEPLOY_DIR/.env" || { echo "manquant : $DEPLOY_DIR/.env"; exit 1; }
+          install -m 644 compose.prod.yaml "$DEPLOY_DIR/compose.yaml"
+          install -m 644 Makefile.prod "$DEPLOY_DIR/Makefile"
+      - name: Déployer
+        working-directory: ${{ env.DEPLOY_DIR }}
+        env:
+          TAG: ${{ steps.sha.outputs.court }}
+        run: make update
