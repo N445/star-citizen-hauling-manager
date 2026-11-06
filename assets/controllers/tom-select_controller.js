@@ -3,6 +3,9 @@ import TomSelect from 'tom-select';
 
 const DELIMITER = ',';
 
+// Language-neutral "free entry" row (Tom Select's default text is English only).
+const createOption = (data, escape) => `<div class="create"><span aria-hidden="true">＋</span> <strong>${escape(data.input)}</strong>…</div>`;
+
 export default class extends Controller {
     static values = { options: Array, optgroups: Array, multiple: Boolean, badges: Boolean, fallbackColor: String };
 
@@ -37,13 +40,13 @@ export default class extends Controller {
     badgeRenderers() {
         const badge = (data, escape) => `<div class="commodity-badge" style="--commodity-color: ${escape(data.color ?? this.fallbackColorValue)}">${escape(data.text)}</div>`;
 
-        return { item: badge, option: (data, escape) => `<div class="option">${badge(data, escape)}</div>` };
+        return { item: badge, option: (data, escape) => `<div class="option">${badge(data, escape)}</div>`, option_create: createOption };
     }
 
     plainRenderers() {
         const moon = (data, escape) => (data.moon ? ` <small class="text-body-secondary">${escape(data.moon)}</small>` : '');
 
-        return { option: (data, escape) => `<div>${escape(data.text)}${moon(data, escape)}</div>` };
+        return { option: (data, escape) => `<div>${escape(data.text)}${moon(data, escape)}</div>`, option_create: createOption };
     }
 
     disconnect() {

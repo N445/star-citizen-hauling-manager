@@ -1,7 +1,15 @@
 nav:
     language: Language
+    main: Main navigation
+    skip: Skip to content
+    theme:
+        label: Theme
+        light: Light
+        dark: Dark
+        auto: System
 
 action:
+    close: Close
     cancel: Cancel
     edit: Edit
     remove: Remove
@@ -24,9 +32,12 @@ tour:
         account_hint: "No account needed. Sign up later to keep your tour and your mission history."
     card:
         title: Tour
+    start_hint: 'Start here: name your tour and choose your ship. Then add your missions and follow the route.'
+    next_steps: 'Next: add your missions, the route is planned automatically.'
     list:
         title: Tours
         empty: No tours yet.
+        empty_hint: A tour groups the missions you accept and plans the pickups and drops for your ship.
         summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
     form:
         name: Tour name
@@ -62,12 +73,18 @@ mission:
     done_in: 'Completed in {duration}'
     pickups_separator: or
     delivery_line: '{dropoff}: {quantity} SCU'
+    progress: '{done}/{total} delivered'
+    confirm_remove: Confirm removal
     board:
         new_title: New mission
         edit_title: Edit mission
         list_title: Missions
         totals: '{quantity} / {capacity} SCU · {reward, number, integer} aUEC'
         empty: No missions yet.
+        empty_hint: Choose a mission type above to add your first one.
+        added: Mission added.
+        saved: Mission saved.
+        removed: Mission removed.
     form:
         type: Mission type
         type_placeholder: Choose…
@@ -78,6 +95,8 @@ mission:
         pickups: Pickup(s)
         pickup_count: '{count, plural, one {Pickup} other {Pickups}}'
         deliveries: Drop-offs
+        deliveries_help: Where the cargo goes, which commodity and how many SCU.
+        pickups_first: Enter the pickup location to continue with the drop-offs.
         dropoff: Drop-off
         dropoff_placeholder: Drop-off location
         resource: Commodity
@@ -90,8 +109,19 @@ mission:
 cargo:
     title: Cargo grid
     scale: 1 cell = 1 SCU
-    controls: 'drag: rotate · wheel: zoom'
-    no_grid: 'No cargo grid: pick a ship from the catalog.'
+    controls: 'Drag: rotate · right-drag: pan · wheel: zoom'
+    no_grid: 'Pick a ship from the catalog to see its cargo grid.'
+    empty_title: No cargo grid yet
+    reset_view: Reset view
+    canvas_label: 3D view of the cargo hold
+    legend:
+        aria: Cargo legend
+        onBoard: On board
+        toLoad: To load
+        toUnload: To unload
+        stacked: Stacked
+    tooltip:
+        stacked: Sits on a crate delivered earlier (no room left)
     warning:
         stacked: 'Not enough room: {count, plural, one {# crate has} other {# crates have}} to sit on top of a crate delivered earlier.'
         unplaced: '{quantity} SCU find no room in the cargo hold at some point of the route.'
@@ -103,12 +133,17 @@ route:
     title: Route
     create_tour_first: Create the tour to plan its route.
     locked: 'Tour started: the route is frozen and no longer moves when you tick items.'
-    no_missions: Add missions to plan the route.
+    no_missions: No route yet.
+    empty_hint: Add your first mission, the route will be planned here automatically.
+    loading: Recalculating the route…
+    legend:
+        pickup: Pick up
+        drop: Drop off
     finished: Tour complete.
     stop_count: '{count, plural, one {# stop} other {# stops}}'
     no_start: no starting point
     reset_order: Auto-plan again
-    reorder_help: Drag a stop that is not done yet by its ⠿ handle to reorder the route.
+    reorder_help: 'Drag a stop that is not done yet by its ⠿ handle (or focus it and use the ↑/↓ keys) to reorder the route.'
     start: Start
     mode:
         aria: Planning mode
@@ -119,7 +154,10 @@ route:
             label: One mission at a time
             description: Finishes each mission before starting the next, in the shortest order.
     stop:
-        drag: Drag to move this stop
+        drag: 'Move this stop (drag, or ↑/↓ keys)'
+        current: Next stop
+        done: Stop done
+        load: Cargo on board after this stop
         drop: 'Drop off {quantity} SCU'
         pickup: Pick up
         split_pickup: 'Quantity split across {count} pickup locations.'

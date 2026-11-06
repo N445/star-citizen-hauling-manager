@@ -16,8 +16,13 @@
 
 {% block body %}
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <h1 class="h3 mb-4">{{ 'profile.title'|trans }}</h1>
+        <div class="col-md-9 col-lg-7 col-xl-6">
+            <div class="hm-page-header">
+                <div>
+                    <h1 class="h3">{{ 'profile.title'|trans }}</h1>
+                    <div class="text-body-secondary">{{ app.user.email }}</div>
+                </div>
+            </div>
 
             <div class="card mb-4">
                 <div class="card-header">{{ 'profile.email.title'|trans }}</div>
@@ -39,13 +44,13 @@
                 </div>
             </div>
 
-            <div class="card border-danger">
-                <div class="card-header text-danger">{{ 'profile.delete.title'|trans }}</div>
+            <div class="card border-danger-subtle">
+                <div class="card-header text-danger border-danger-subtle">{{ 'profile.delete.title'|trans }}</div>
                 <div class="card-body">
-                    <p>{{ 'profile.delete.warning'|trans }}</p>
+                    <p class="text-body-secondary">{{ 'profile.delete.warning'|trans }}</p>
                     {{ form_start(deletionForm, {attr: {novalidate: 'novalidate'}}) }}
                         {{ form_rest(deletionForm) }}
-                        <button class="btn btn-danger">{{ 'profile.delete.submit'|trans }}</button>
+                        <button class="btn btn-outline-danger">{{ 'profile.delete.submit'|trans }}</button>
                     {{ form_end(deletionForm) }}
                 </div>
             </div>

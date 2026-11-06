@@ -1,19 +1,31 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}{{ 'tour.list.title'|trans }} · Hauling Manager{% endblock %}
+
 {% block body %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">{{ 'tour.list.title'|trans }}</h1>
-        <a class="btn btn-primary" href="{{ path('tour_new') }}">{{ 'tour.new'|trans }}</a>
+    {% import '_icons.html.twig' as icons %}
+    <div class="hm-page-header">
+        <h1 class="h3">{{ 'tour.list.title'|trans }}</h1>
+        <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
     </div>
 
     {% if tours is empty %}
-        <p class="text-body-secondary">{{ 'tour.list.empty'|trans }}</p>
+        <div class="hm-empty">
+            <div class="hm-empty-icon">{{ icons.icon('brand') }}</div>
+            <h2 class="h5">{{ 'tour.list.empty'|trans }}</h2>
+            <p>{{ 'tour.list.empty_hint'|trans }}</p>
+            <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ path('tour_new') }}">{{ icons.icon('plus') }}{{ 'tour.new'|trans }}</a>
+        </div>
     {% else %}
         <div class="list-group">
             {% for tour in tours %}
-                <a class="list-group-item list-group-item-action d-flex justify-content-between" href="{{ path('tour', {id: tour.id}) }}">
-                    <span>{{ tour.name }} <small class="text-body-secondary">— {{ tour.shipName }}</small></span>
-                    <span>{{ 'tour.list.summary'|trans({count: tour.missions|length, reward: tour.totalReward}) }}</span>
+                <a class="list-group-item list-group-item-action hm-list-row" href="{{ path('tour', {id: tour.id}) }}">
+                    <span class="flex-grow-1">
+                        <span class="d-block fw-semibold text-truncate">{{ tour.name }}</span>
+                        <small class="text-body-secondary">{{ tour.shipName }}</small>
+                    </span>
+                    <span class="text-body-secondary small text-end">{{ 'tour.list.summary'|trans({count: tour.missions|length, reward: tour.totalReward}) }}</span>
+                    {{ icons.icon('chevron', 'hm-list-chevron') }}
                 </a>
             {% endfor %}
         </div>

@@ -1,7 +1,15 @@
 nav:
     language: Langue
+    main: Navigation principale
+    skip: Aller au contenu
+    theme:
+        label: Thème
+        light: Clair
+        dark: Sombre
+        auto: Système
 
 action:
+    close: Fermer
     cancel: Annuler
     edit: Modifier
     remove: Retirer
@@ -14,9 +22,6 @@ money:
 
 flash:
     tour:
-    guest:
-        replace_hint: "Sans compte, tu gardes une seule tournée : une nouvelle remplace celle-ci. Inscris-toi pour garder ton historique."
-        account_hint: "Pas besoin de compte. Inscris-toi plus tard pour garder ta tournée et l'historique de tes missions."
         created: 'Tournée créée : ajoute ses missions.'
         saved: Tournée enregistrée.
 
@@ -27,9 +32,12 @@ tour:
     new: Nouvelle tournée
     card:
         title: Tournée
+    start_hint: 'Commence ici : nomme ta tournée et choisis ton vaisseau. Ajoute ensuite tes missions et suis le parcours.'
+    next_steps: 'Ensuite : ajoute tes missions, le parcours est calculé automatiquement.'
     list:
         title: Tournées
         empty: Aucune tournée pour l'instant.
+        empty_hint: Une tournée regroupe les missions acceptées et planifie les ramassages et livraisons pour ton vaisseau.
         summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
     form:
         name: Nom de la tournée
@@ -65,12 +73,18 @@ mission:
     done_in: 'Terminée en {duration}'
     pickups_separator: ou
     delivery_line: '{dropoff} : {quantity} SCU'
+    progress: '{done}/{total} livrées'
+    confirm_remove: Confirmer la suppression
     board:
         new_title: Nouvelle mission
         edit_title: Modifier la mission
         list_title: Missions
         totals: '{quantity} / {capacity} SCU · {reward, number, integer} aUEC'
         empty: Aucune mission pour l'instant.
+        empty_hint: Choisis un type de mission ci-dessus pour ajouter la première.
+        added: Mission ajoutée.
+        saved: Mission enregistrée.
+        removed: Mission supprimée.
     form:
         type: Type de mission
         type_placeholder: Choisir…
@@ -81,6 +95,8 @@ mission:
         pickups: Ramassage(s)
         pickup_count: '{count, plural, one {Ramassage} other {Ramassages}}'
         deliveries: Livraisons
+        deliveries_help: Où va la cargaison, quelle ressource et combien de SCU.
+        pickups_first: Indique le lieu de ramassage pour passer aux livraisons.
         dropoff: Livraison
         dropoff_placeholder: Lieu de livraison
         resource: Ressource
@@ -93,8 +109,19 @@ mission:
 cargo:
     title: Soute
     scale: 1 case = 1 SCU
-    controls: 'clic-glisser : tourner · molette : zoom'
-    no_grid: 'Aucune grille : choisis un vaisseau du catalogue.'
+    controls: 'Glisser : tourner · clic droit : déplacer · molette : zoom'
+    no_grid: 'Choisis un vaisseau du catalogue pour voir sa grille cargo.'
+    empty_title: Pas encore de grille cargo
+    reset_view: Recentrer la vue
+    canvas_label: Vue 3D de la soute
+    legend:
+        aria: Légende de la soute
+        onBoard: À bord
+        toLoad: À charger
+        toUnload: À décharger
+        stacked: Empilée
+    tooltip:
+        stacked: Posée sur une caisse livrée avant (faute de place)
     warning:
         stacked: 'Faute de place, {count, plural, one {# caisse doit être posée} other {# caisses doivent être posées}} sur une caisse livrée avant elle.'
         unplaced: '{quantity} SCU ne trouvent pas de place dans la soute à un moment du trajet.'
@@ -106,12 +133,17 @@ route:
     title: Parcours
     create_tour_first: Crée la tournée pour calculer son parcours.
     locked: 'Tournée commencée : le parcours est figé, il ne bouge plus quand tu coches.'
-    no_missions: Ajoute des missions pour calculer le parcours.
+    no_missions: Pas encore de parcours.
+    empty_hint: Ajoute ta première mission, le parcours sera calculé ici automatiquement.
+    loading: Recalcul du parcours…
+    legend:
+        pickup: Ramasser
+        drop: Livrer
     finished: Tournée terminée.
     stop_count: '{count, plural, one {# arrêt} other {# arrêts}}'
     no_start: sans point de départ
     reset_order: Recalcul auto
-    reorder_help: Glisse un arrêt pas encore fait par sa poignée ⠿ pour réorganiser le trajet.
+    reorder_help: 'Glisse un arrêt pas encore fait par sa poignée ⠿ (ou donne-lui le focus et utilise les touches ↑/↓) pour réorganiser le trajet.'
     start: Départ
     mode:
         aria: Mode de calcul
@@ -122,7 +154,10 @@ route:
             label: Mission par mission
             description: Termine chaque mission avant d'en commencer une autre, dans l'ordre le plus court.
     stop:
-        drag: Glisser pour déplacer l'arrêt
+        drag: 'Déplacer cet arrêt (glisser, ou touches ↑/↓)'
+        current: Prochain arrêt
+        done: Arrêt terminé
+        load: Cargaison à bord après cet arrêt
         drop: 'Livre {quantity} SCU'
         pickup: Récupère
         split_pickup: 'Quantité répartie entre {count} lieux de ramassage.'

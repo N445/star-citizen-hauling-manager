@@ -2,16 +2,23 @@ import { Controller } from '@hotwired/stimulus';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const FLOOR_COLOR = 0x8a9097;
-const FLOOR_LINE_COLOR = 0xa9aeb4;
-const OUTLINE_COLOR = 0x5c636a;
-const DOOR_COLOR = 0xe8890c;
-const UNLOADING_COLOR = 0xe8890c;
+const PALETTES = {
+    light: { floor: '#8a9097', floorOpacity: 0.14, line: '#a3a9b0', lineOpacity: 0.6, outline: '#5c636a', contrast: '#111418', edgeShade: 0.55 },
+    dark: { floor: '#7d8a99', floorOpacity: 0.1, line: '#4d5866', lineOpacity: 0.75, outline: '#8d99a8', contrast: '#ffffff', edgeShade: 1.35 },
+};
+const ACCENTS = { pickup: ['--hm-pickup', '#2e9e5b'], drop: ['--hm-drop', '#e8890c'], stacked: ['--bs-danger', '#dc3545'] };
+const DOOR_COLOR = '#e8890c';
 const ARROW_LENGTH = 3;
 const ARROW_GAP = 0.4;
+const CRATE_GAP = 0.08;
+const DROP_HEIGHT = 1.5;
+const DURATION = { appear: 420, leave: 260, dim: 160, camera: 650, pulse: 2400 };
+const PULSES = 3;
 
 const range = (count) => Array.from({ length: count + 1 }, (_, index) => index);
 const point = (x, y, z) => new THREE.Vector3(x, y, z);
+const easeOut = (k) => 1 - (1 - k) ** 3;
+const easeInOut = (k) => (k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2);
 
 const floorLines = ({ width, length }) => [
     ...range(length).flatMap((z) => [point(0, 0, z), point(width, 0, z)]),
@@ -44,55 +51,126 @@ const doorArrows = {
     bottom: (box, center) => ({ shape: upright, at: [center.x, box.min.y - reach, center.z] }),
 };
 
+const crateId = (crate) => [crate.key, crate.x, crate.y, crate.z, crate.width, crate.height, crate.length].join('|');
+const crateStatus = (crate) => (crate.unloading ? 'toUnload' : crate.phantom ? 'toLoad' : 'onBoard');
+const crateVolume = (crate) => crate.size ?? crate.width * crate.height * crate.length;
+
+// Résout n'importe quelle couleur CSS (variables, color-mix, oklch…) en RGB via un canvas 1×1.
+const colorProbe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+const cssColor = (value, fallback) => {
+    colorProbe.fillStyle = fallback;
+    colorProbe.fillStyle = value || fallback;
+    colorProbe.clearRect(0, 0, 1, 1);
+    colorProbe.fillRect(0, 0, 1, 1);
+    const [red, green, blue] = colorProbe.getImageData(0, 0, 1, 1).data;
+
+    return new THREE.Color().setRGB(red / 255, green / 255, blue / 255, THREE.SRGBColorSpace);
+};
+
 export default class extends Controller {
-    static targets = ['canvas', 'empty'];
-    static values = { groups: Array };
+    static targets = ['canvas', 'empty', 'stage', 'tooltip', 'legend', 'count', 'reset'];
+    static values = { groups: Array, labels: Object };
 
     connect() {
         this.grids = [];
+        this.groupsKey = null;
+        this.planKey = null;
         this.cargoPlan = { doors: ['rear'], crates: [] };
-        this.crateMeshes = [];
+        this.meshes = new Map();
         this.hoveredKey = null;
+        this.pointed = null;
+        this.pulse = 0;
+        this.tweens = new Set();
+        this.frameId = null;
+        this.size = { width: 0, height: 0 };
+
         this.scene = new THREE.Scene();
+        this.floorGroup = new THREE.Group();
+        this.crateGroup = new THREE.Group();
+        this.scene.add(this.floorGroup, this.crateGroup);
         this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 2000);
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.domElement.setAttribute('role', 'img');
+        this.renderer.domElement.setAttribute('aria-label', this.labelsValue.canvas ?? '');
         this.canvasTarget.append(this.renderer.domElement);
+        this.raycaster = new THREE.Raycaster();
+
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.addEventListener('change', () => this.draw());
-        this.raycaster = new THREE.Raycaster();
-        this.renderer.domElement.addEventListener('pointermove', (event) => this.pointAt(event));
-        this.renderer.domElement.addEventListener('pointerleave', () => this.announce(null));
+        this.controls.addEventListener('start', () => {
+            this.userMoved = true;
+            this.stopTween(this.cameraTween);
+            this.hideTooltip();
+        });
+
+        this.motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this.darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        this.onThemeChange = () => this.applyTheme();
+        this.onPointerMove = (event) => this.pointAt(event);
+        this.onPointerLeave = () => this.leave();
+        window.addEventListener('theme:change', this.onThemeChange);
+        this.darkScheme.addEventListener('change', this.onThemeChange);
+        this.themeObserver = new MutationObserver(this.onThemeChange);
+        this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+        this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
+        this.renderer.domElement.addEventListener('pointerleave', this.onPointerLeave);
         this.resizeObserver = new ResizeObserver(() => this.resize());
         this.resizeObserver.observe(this.canvasTarget);
+
+        this.applyTheme(false);
         this.readInitialPlan();
         this.useGroups(this.groupsValue);
     }
 
     disconnect() {
+        cancelAnimationFrame(this.frameId);
+        this.tweens.clear();
+        window.removeEventListener('theme:change', this.onThemeChange);
+        this.darkScheme.removeEventListener('change', this.onThemeChange);
+        this.themeObserver.disconnect();
         this.resizeObserver.disconnect();
         this.controls.dispose();
-        this.clearScene();
+        this.dispose(this.scene);
+        this.scene.clear();
         this.renderer.dispose();
+        this.renderer.domElement.remove();
     }
 
     show({ target, detail: { option } }) {
-        if (!target.matches('[data-ship-name]')) {
-            return;
+        if (target.matches('[data-ship-name]')) {
+            this.useGroups(option?.cargoGroups ?? []);
         }
-
-        this.useGroups(option?.cargoGroups ?? []);
     }
 
     plan({ detail }) {
+        const key = JSON.stringify(detail);
+
+        if (key === this.planKey) {
+            return;
+        }
+
+        this.planKey = key;
         this.cargoPlan = detail;
-        this.rebuild();
+        this.syncCrates(true);
+        this.addDoors();
+        this.draw();
     }
 
     highlight({ detail: { key } }) {
         this.hoveredKey = key;
-        this.crateMeshes.forEach((mesh) => this.paint(mesh));
-        this.draw();
+        const meshes = [...this.meshes.values()];
+        const from = meshes.map((mesh) => mesh.userData.dim);
+        const to = meshes.map((mesh) => (key !== null && !mesh.userData.crate.tokens.includes(key) ? 1 : 0));
+        this.stopTween(this.dimTween);
+        this.dimTween = this.tween(DURATION.dim, (k) => meshes.forEach((mesh, index) => {
+            mesh.userData.dim = from[index] + (to[index] - from[index]) * k;
+            this.paint(mesh);
+        }));
+    }
+
+    resetView() {
+        this.frame(true);
     }
 
     readInitialPlan() {
@@ -100,72 +178,254 @@ export default class extends Controller {
 
         if (planElement) {
             this.cargoPlan = JSON.parse(planElement.dataset.cargoPlanPlanValue);
+            this.planKey = JSON.stringify(this.cargoPlan);
         }
     }
 
     useGroups(groups) {
-        this.grids = groups.flatMap((group) => group.grids.map((grid) => ({ ...grid, x: group.x + grid.x, z: group.z + grid.z })));
-        this.emptyTarget.hidden = this.grids.length > 0;
-        this.canvasTarget.hidden = this.grids.length === 0;
-        this.rebuild();
-        this.frame();
-        this.resize();
-    }
+        const key = JSON.stringify(groups);
 
-    rebuild() {
-        this.clearScene();
-        this.grids.forEach((grid) => this.scene.add(this.floor(grid)));
-        this.crateMeshes = this.grids.length === 0 ? [] : this.cargoPlan.crates.map((crate) => this.crate(crate));
-        this.crateMeshes.forEach((mesh) => this.scene.add(mesh));
-        this.addDoor();
+        if (key === this.groupsKey) {
+            return;
+        }
+
+        const hadGrid = this.grids.length > 0;
+        this.groupsKey = key;
+        this.grids = groups.flatMap((group) => group.grids.map((grid) => ({ ...grid, x: group.x + grid.x, z: group.z + grid.z })));
+        const hasGrid = this.grids.length > 0;
+        this.emptyTarget.hidden = hasGrid;
+        this.stageTarget.hidden = !hasGrid;
+        this.toggleTarget('legend', hasGrid);
+        this.toggleTarget('reset', hasGrid);
+        this.buildFloors();
+        this.syncCrates(hadGrid);
+        this.addDoors();
+        this.resize();
+        this.frame(hadGrid);
         this.draw();
     }
 
-    floor(grid) {
-        const floor = new THREE.Group();
-        floor.position.set(grid.x, grid.y, grid.z);
-        const plane = new THREE.Mesh(boxGeometry(grid.width, 0.02, grid.length), new THREE.MeshBasicMaterial({ color: FLOOR_COLOR, transparent: true, opacity: 0.15, depthWrite: false }));
-        const cells = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(floorLines(grid)), new THREE.LineBasicMaterial({ color: FLOOR_LINE_COLOR, transparent: true, opacity: 0.6 }));
-        const outline = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeometry(grid.width, 0, grid.length)), new THREE.LineBasicMaterial({ color: OUTLINE_COLOR }));
-        floor.add(plane, cells, outline);
-
-        return floor;
+    toggleTarget(name, visible) {
+        this.targets.findAll(name).forEach((element) => {
+            element.hidden = !visible;
+        });
     }
 
-    crate(crate) {
-        const geometry = boxGeometry(crate.width - 0.08, crate.height - 0.08, crate.length - 0.08);
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: crate.color, transparent: true, depthWrite: !crate.phantom }));
-        mesh.position.set(crate.x + 0.04, crate.y + 0.04, crate.z + 0.04);
-        mesh.userData = crate;
-        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ transparent: true })));
-        this.paint(mesh);
-
-        return mesh;
+    // Sol des grilles : reconstruit au changement de vaisseau ou de thème.
+    buildFloors() {
+        this.dispose(this.floorGroup);
+        this.floorGroup.clear();
+        const palette = this.palette;
+        this.grids.forEach((grid) => {
+            const floor = new THREE.Group();
+            floor.position.set(grid.x, grid.y, grid.z);
+            floor.add(
+                new THREE.Mesh(boxGeometry(grid.width, 0.02, grid.length), new THREE.MeshBasicMaterial({ color: palette.floor, transparent: true, opacity: palette.floorOpacity, depthWrite: false })),
+                new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(floorLines(grid)), new THREE.LineBasicMaterial({ color: palette.line, transparent: true, opacity: palette.lineOpacity })),
+                new THREE.LineSegments(new THREE.EdgesGeometry(boxGeometry(grid.width, 0, grid.length)), new THREE.LineBasicMaterial({ color: palette.outline })),
+            );
+            this.floorGroup.add(floor);
+        });
     }
 
-    paint(mesh) {
-        const crate = mesh.userData;
-        const dimmed = this.hoveredKey !== null && !crate.tokens.includes(this.hoveredKey);
-        const baseOpacity = crate.phantom ? 0.25 : 0.85;
-        mesh.material.opacity = dimmed ? baseOpacity * 0.25 : baseOpacity;
-        const edges = mesh.children[0].material;
-        edges.color.set(crate.unloading ? UNLOADING_COLOR : new THREE.Color(crate.color).multiplyScalar(0.55));
-        edges.opacity = dimmed ? 0.2 : 1;
-    }
+    addDoors() {
+        this.floorGroup.children.filter((child) => child.userData.door).forEach((arrow) => {
+            this.dispose(arrow);
+            arrow.removeFromParent();
+        });
 
-    addDoor() {
         if (this.grids.length === 0) {
             return;
         }
 
         const bounds = this.gridBounds();
         const center = bounds.getCenter(new THREE.Vector3());
-        (this.cargoPlan.doors ?? ['rear']).forEach((door) => {
+        (this.cargoPlan.doors?.length ? this.cargoPlan.doors : ['rear']).forEach((door) => {
             const { shape, at } = (doorArrows[door] ?? doorArrows.rear)(bounds, center);
-            const arrow = new THREE.Mesh(shape(doubleArrow()), new THREE.MeshBasicMaterial({ color: DOOR_COLOR, side: THREE.DoubleSide }));
+            const arrow = new THREE.Mesh(shape(doubleArrow()), new THREE.MeshBasicMaterial({ color: DOOR_COLOR, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
             arrow.position.set(...at);
-            this.scene.add(arrow);
+            arrow.userData.door = true;
+            this.floorGroup.add(arrow);
         });
+    }
+
+    // Garde les caisses inchangées, fait tomber les nouvelles et fondre celles qui partent.
+    syncCrates(animate) {
+        const crates = this.grids.length === 0 ? [] : this.cargoPlan.crates ?? [];
+        const next = new Map(crates.map((crate) => [crateId(crate), crate]));
+
+        this.meshes.forEach((mesh, id) => {
+            if (!next.has(id)) {
+                this.meshes.delete(id);
+                this.removeCrate(mesh, animate);
+            }
+        });
+
+        let delay = 0;
+        next.forEach((crate, id) => {
+            const existing = this.meshes.get(id);
+
+            if (existing) {
+                existing.userData.crate = crate;
+                this.paint(existing);
+
+                return;
+            }
+
+            const mesh = this.crate(crate);
+            this.meshes.set(id, mesh);
+            this.crateGroup.add(mesh);
+            this.dropIn(mesh, animate ? delay : null);
+            delay = Math.min(delay + 40, 400);
+        });
+
+        this.updateLegend(crates);
+        this.startPulse();
+    }
+
+    crate(crate) {
+        const geometry = new THREE.BoxGeometry(crate.width - CRATE_GAP, crate.height - CRATE_GAP, crate.length - CRATE_GAP);
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: crate.color, transparent: true, depthWrite: !crate.phantom }));
+        mesh.position.set(crate.x + crate.width / 2, crate.y + crate.height / 2, crate.z + crate.length / 2);
+        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ transparent: true })));
+        mesh.userData = { crate, restY: mesh.position.y, appear: 1, dim: 0, leaving: false };
+
+        return mesh;
+    }
+
+    dropIn(mesh, delay) {
+        const { userData } = mesh;
+        userData.dim = this.hoveredKey !== null && !userData.crate.tokens.includes(this.hoveredKey) ? 1 : 0;
+
+        if (delay === null) {
+            this.paint(mesh);
+
+            return;
+        }
+
+        userData.appear = 0;
+        this.paint(mesh);
+        this.tween(DURATION.appear, (k) => {
+            userData.appear = k;
+            mesh.position.y = userData.restY + (1 - k) * DROP_HEIGHT;
+            this.paint(mesh);
+        }, null, delay);
+    }
+
+    removeCrate(mesh, animate) {
+        const { userData } = mesh;
+        userData.leaving = true;
+
+        if (this.pointed === mesh) {
+            this.leave();
+        }
+
+        const done = () => {
+            this.dispose(mesh);
+            mesh.removeFromParent();
+        };
+
+        if (!animate) {
+            done();
+
+            return;
+        }
+
+        const start = userData.appear;
+        this.tween(DURATION.leave, (k) => {
+            userData.appear = start * (1 - k);
+            mesh.scale.setScalar(1 - 0.15 * k);
+            this.paint(mesh);
+        }, done);
+    }
+
+    // Les caisses de l'arrêt courant (à charger / à décharger) clignotent quelques fois puis restent colorées.
+    startPulse() {
+        this.stopTween(this.pulseTween);
+        this.pulse = 0;
+
+        if (![...this.meshes.values()].some((mesh) => this.pulseAccent(mesh.userData.crate))) {
+            return;
+        }
+
+        this.pulseTween = this.tween(DURATION.pulse, (_, raw) => {
+            this.pulse = raw >= 1 ? 0 : (1 - Math.cos(raw * PULSES * 2 * Math.PI)) / 2;
+            this.meshes.forEach((mesh) => this.pulseAccent(mesh.userData.crate) && this.paint(mesh));
+        }, null, 250);
+    }
+
+    pulseAccent(crate) {
+        if (crate.unloading) {
+            return this.accents.drop;
+        }
+
+        return crate.phantom ? this.accents.pickup : null;
+    }
+
+    paint(mesh) {
+        const { crate, appear, dim } = mesh.userData;
+        const pointed = this.pointed === mesh;
+        const pulseAccent = this.pulseAccent(crate);
+        const pulse = pulseAccent ? this.pulse : 0;
+        const edgeAccent = crate.stacked ? this.accents.stacked : pulseAccent;
+        const base = crate.phantom ? 0.3 + 0.3 * pulse : 0.85;
+
+        mesh.material.color.set(crate.color);
+        if (pulse > 0) {
+            mesh.material.color.lerp(pulseAccent, 0.45 * pulse);
+        }
+        mesh.material.opacity = Math.min(1, (pointed ? base + 0.1 : base) * appear * (1 - 0.75 * dim));
+
+        const edges = mesh.children[0].material;
+        if (pointed) {
+            edges.color.copy(this.palette.contrastColor);
+        } else if (edgeAccent) {
+            edges.color.copy(edgeAccent);
+        } else {
+            edges.color.set(crate.color).multiplyScalar(this.palette.edgeShade);
+        }
+        edges.opacity = appear * (1 - 0.8 * dim);
+
+        if (!mesh.userData.leaving) {
+            mesh.scale.setScalar(pointed ? 1.04 : 1);
+        }
+    }
+
+    updateLegend(crates) {
+        const totals = { onBoard: 0, toLoad: 0, toUnload: 0, stacked: 0 };
+        crates.forEach((crate) => {
+            totals[crateStatus(crate)] += crateVolume(crate);
+            totals.stacked += crate.stacked ? 1 : 0;
+        });
+
+        this.countTargets.forEach((element) => {
+            const value = totals[element.dataset.kind] ?? 0;
+            element.textContent = value;
+            element.closest('[data-legend-item]')?.toggleAttribute('data-empty', value === 0);
+        });
+    }
+
+    applyTheme(redraw = true) {
+        const attribute = document.documentElement.dataset.bsTheme;
+        const theme = attribute === 'dark' || attribute === 'light' ? attribute : (this.darkScheme.matches ? 'dark' : 'light');
+
+        if (redraw && theme === this.theme) {
+            return;
+        }
+
+        this.theme = theme;
+        this.palette = { ...PALETTES[theme], contrastColor: new THREE.Color(PALETTES[theme].contrast) };
+        const styles = getComputedStyle(document.documentElement);
+        this.accents = Object.fromEntries(Object.entries(ACCENTS).map(([name, [variable, fallback]]) => [name, cssColor(styles.getPropertyValue(variable).trim(), fallback)]));
+
+        if (!redraw) {
+            return;
+        }
+
+        this.buildFloors();
+        this.addDoors();
+        this.meshes.forEach((mesh) => this.paint(mesh));
+        this.draw();
     }
 
     gridBounds() {
@@ -176,33 +436,132 @@ export default class extends Controller {
     }
 
     pointAt(event) {
-        const area = this.renderer.domElement.getBoundingClientRect();
-        const pointer = new THREE.Vector2(((event.clientX - area.left) / area.width) * 2 - 1, -((event.clientY - area.top) / area.height) * 2 + 1);
-        this.raycaster.setFromCamera(pointer, this.camera);
-        const [hit] = this.raycaster.intersectObjects(this.crateMeshes, false);
-        this.renderer.domElement.title = hit?.object.userData.label ?? '';
-        this.announce(hit?.object.userData.key ?? null);
-    }
-
-    announce(key) {
-        if (key === this.hoveredKey) {
+        if (event.buttons !== 0) {
             return;
         }
 
-        window.dispatchEvent(new CustomEvent('cargo:highlight', { detail: { key } }));
+        const area = this.renderer.domElement.getBoundingClientRect();
+        const pointer = new THREE.Vector2(((event.clientX - area.left) / area.width) * 2 - 1, -((event.clientY - area.top) / area.height) * 2 + 1);
+        this.raycaster.setFromCamera(pointer, this.camera);
+        const targets = [...this.meshes.values()].filter((mesh) => mesh.userData.appear > 0.5);
+        const [hit] = this.raycaster.intersectObjects(targets, false);
+        this.point(hit?.object ?? null);
+
+        if (hit) {
+            this.showTooltip(hit.object.userData.crate, event.clientX - area.left, event.clientY - area.top);
+        } else {
+            this.hideTooltip();
+        }
     }
 
-    frame() {
+    point(mesh) {
+        if (mesh === this.pointed) {
+            return;
+        }
+
+        const previous = this.pointed;
+        this.pointed = mesh;
+        [previous, mesh].filter(Boolean).forEach((crate) => this.paint(crate));
+        this.renderer.domElement.classList.toggle('is-pointing', mesh !== null);
+        this.announce(mesh?.userData.crate.key ?? null);
+        this.draw();
+    }
+
+    leave() {
+        this.point(null);
+        this.hideTooltip();
+    }
+
+    announce(key) {
+        if (key !== this.hoveredKey) {
+            window.dispatchEvent(new CustomEvent('cargo:highlight', { detail: { key } }));
+        }
+    }
+
+    showTooltip(crate, x, y) {
+        if (!this.hasTooltipTarget) {
+            return;
+        }
+
+        const tooltip = this.tooltipTarget;
+
+        if (tooltip.dataset.crate !== crateId(crate)) {
+            tooltip.dataset.crate = crateId(crate);
+            this.fillTooltip(tooltip, crate);
+        }
+
+        tooltip.hidden = false;
+        const { width, height } = this.size;
+        const left = x + 14 + tooltip.offsetWidth > width ? x - 14 - tooltip.offsetWidth : x + 14;
+        const top = Math.min(Math.max(0, y + 14), height - tooltip.offsetHeight);
+        tooltip.style.transform = `translate(${Math.max(0, left)}px, ${Math.max(0, top)}px)`;
+        tooltip.classList.add('is-visible');
+    }
+
+    fillTooltip(tooltip, crate) {
+        const line = (className, text) => Object.assign(document.createElement('div'), { className, textContent: text });
+        const status = crateStatus(crate);
+        tooltip.replaceChildren();
+        tooltip.dataset.status = status;
+        tooltip.style.setProperty('--crate-color', crate.color);
+
+        if (crate.resource === undefined) {
+            tooltip.append(line('cargo-tooltip__title', crate.label ?? ''));
+
+            return;
+        }
+
+        const title = line('cargo-tooltip__title', `${crate.size} SCU · `);
+        title.append(Object.assign(document.createElement('span'), { className: 'cargo-tooltip__resource', textContent: crate.resource }));
+        tooltip.append(
+            title,
+            line('cargo-tooltip__mission', crate.mission),
+            line('cargo-tooltip__dropoff', `→ ${crate.dropoff}`),
+            line('cargo-tooltip__status', this.labelsValue[status] ?? ''),
+        );
+
+        if (crate.stacked) {
+            tooltip.append(line('cargo-tooltip__warning', this.labelsValue.stacked ?? ''));
+        }
+    }
+
+    hideTooltip() {
+        if (this.hasTooltipTarget) {
+            this.tooltipTarget.classList.remove('is-visible');
+        }
+    }
+
+    frame(animate) {
         if (this.grids.length === 0) {
             return;
         }
 
-        const bounds = this.gridBounds();
-        const center = bounds.getCenter(new THREE.Vector3());
-        const size = bounds.getSize(new THREE.Vector3()).length();
-        this.camera.position.copy(center).add(point(size * 0.7, size * 0.6, size * 0.7));
-        this.controls.target.copy(center);
-        this.controls.update();
+        // Cadre la sphère englobante (grilles + flèches de porte) quel que soit le format du canvas.
+        this.userMoved = false;
+        const sphere = this.gridBounds().expandByVector(point(reach, 0, reach)).getBoundingSphere(new THREE.Sphere());
+        const center = sphere.center;
+        const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
+        const distance = sphere.radius / Math.sin(Math.min(halfFov, Math.atan(Math.tan(halfFov) * this.camera.aspect))) * 0.7;
+        const position = center.clone().add(point(0.6, 0.55, 0.6).normalize().multiplyScalar(distance));
+        this.stopTween(this.cameraTween);
+
+        if (!animate) {
+            this.camera.position.copy(position);
+            this.controls.target.copy(center);
+            this.controls.update();
+
+            return;
+        }
+
+        const fromPosition = this.camera.position.clone();
+        const fromTarget = this.controls.target.clone();
+        this.cameraTween = this.tween(DURATION.camera, (k) => {
+            this.camera.position.lerpVectors(fromPosition, position, k);
+            this.controls.target.lerpVectors(fromTarget, center, k);
+            this.controls.update();
+        }, () => {
+            this.cameraTween = null;
+        }, 0, easeInOut);
     }
 
     resize() {
@@ -212,22 +571,88 @@ export default class extends Controller {
             return;
         }
 
-        const height = Math.min(width * 0.85, window.innerHeight * 0.7);
+        const height = Math.round(Math.min(width * 0.85, window.innerHeight * 0.7));
+
+        if (width === this.size.width && height === this.size.height) {
+            return;
+        }
+
+        this.size = { width, height };
         this.renderer.setSize(width, height);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+
+        if (!this.userMoved && !this.cameraTween) {
+            this.frame(false);
+        }
+
         this.draw();
     }
 
-    draw() {
-        this.renderer.render(this.scene, this.camera);
+    // Animations : boucle requestAnimationFrame uniquement tant qu'une animation tourne, sinon rendu à la demande.
+    tween(duration, step, done = null, delay = 0, ease = easeOut) {
+        if (this.motion.matches) {
+            step(1, 1);
+            done?.();
+            this.draw();
+
+            return null;
+        }
+
+        const tween = { start: performance.now() + delay, duration, step, done, ease };
+        this.tweens.add(tween);
+        this.loop();
+
+        return tween;
     }
 
-    clearScene() {
-        this.scene.traverse((object) => {
+    stopTween(tween) {
+        if (tween) {
+            this.tweens.delete(tween);
+        }
+
+        if (tween === this.cameraTween) {
+            this.cameraTween = null;
+        }
+    }
+
+    loop() {
+        this.frameId ??= requestAnimationFrame((now) => this.tick(now));
+    }
+
+    tick(now) {
+        this.frameId = null;
+        this.tweens.forEach((tween) => {
+            const raw = Math.min(1, Math.max(0, (now - tween.start) / tween.duration));
+
+            if (now < tween.start) {
+                return;
+            }
+
+            tween.step(tween.ease(raw), raw);
+
+            if (raw === 1) {
+                this.tweens.delete(tween);
+                tween.done?.();
+            }
+        });
+        this.draw();
+
+        if (this.tweens.size > 0) {
+            this.loop();
+        }
+    }
+
+    draw() {
+        if (this.size.width > 0) {
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    dispose(root) {
+        root.traverse((object) => {
             object.geometry?.dispose();
             object.material?.dispose();
         });
-        this.scene.clear();
     }
 }

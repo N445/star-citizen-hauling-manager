@@ -149,6 +149,11 @@ final class RoutePanel
             'tokens' => $tokens,
             'phantom' => $crate->isPhantom(),
             'unloading' => $crate->isUnloadingAt($currentStep),
+            'stacked' => $crate->stackedOnEarlierDelivery,
+            'size' => $crate->size,
+            'resource' => $delivery->resource(),
+            'mission' => $this->tour->missionLabel($delivery->mission()),
+            'dropoff' => $delivery->dropoff(),
             'label' => $this->translator->trans($crate->stackedOnEarlierDelivery ? 'cargo.crate.label_stacked' : 'cargo.crate.label', [
                 'size' => $crate->size,
                 'resource' => $delivery->resource(),

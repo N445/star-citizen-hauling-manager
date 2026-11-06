@@ -1,0 +1,12 @@
+{% import '_icons.html.twig' as icons %}
+{% set variant = {success: 'success', error: 'danger', danger: 'danger', warning: 'warning'}[type] ?? 'info' %}
+<div class="toast show hm-toast hm-toast--{{ variant }}" role="{{ variant in ['danger', 'warning'] ? 'alert' : 'status' }}" data-controller="toast">
+    <div class="hm-toast-body">
+        {{ icons.icon('success', 'hm-toast-icon hm-toast-icon--success') }}
+        {{ icons.icon('warning', 'hm-toast-icon hm-toast-icon--warning') }}
+        {{ icons.icon('info', 'hm-toast-icon hm-toast-icon--info') }}
+        <div class="flex-grow-1" data-toast-message>{{ message }}</div>
+        <button type="button" class="btn-close" aria-label="{{ 'action.close'|trans }}" data-action="toast#dismiss"></button>
+    </div>
+    <div class="hm-toast-progress" data-toast-target="progress"></div>
+</div>

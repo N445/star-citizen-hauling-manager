@@ -1,0 +1,521 @@
+/* Tour page: tour form, missions (MissionBoard) and route (RoutePanel). */
+
+.tour-page {
+    --tp-pickup: var(--hm-pickup, #2e9e5b);
+    --tp-pickup-text: var(--hm-pickup-text, var(--tp-pickup));
+    --tp-drop: var(--hm-drop, #e8890c);
+    --tp-drop-text: var(--hm-drop-text, var(--tp-drop));
+    --tp-accent: var(--bs-primary);
+    --tp-accent-rgb: var(--bs-primary-rgb);
+    --tp-ease: var(--hm-ease, cubic-bezier(0.2, 0.7, 0.2, 1));
+    --tp-fast: var(--hm-duration-fast, 120ms);
+    --tp-normal: var(--hm-duration-normal, 220ms);
+}
+
+/* ---- Step badges (1 tour, 2 missions, 3 route) and hints ---- */
+.tour-page .step-badge {
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--tp-accent);
+    color: var(--hm-accent-contrast, #fff);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.tour-page .step-badge--done {
+    background: rgba(var(--tp-accent-rgb), 0.15);
+    color: var(--tp-accent);
+}
+
+.tour-page .tour-start-hint {
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid var(--tp-accent);
+    border-radius: var(--bs-border-radius-sm);
+    background: rgba(var(--tp-accent-rgb), 0.08);
+    font-size: 0.875rem;
+}
+
+.tour-page .hm-empty {
+    padding: 1.5rem 1rem;
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both;
+}
+
+.tour-page .hm-empty-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.tour-page .hm-empty strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* Labels with the pickup / drop colour code used everywhere on the page. */
+.tour-page .hm-label::before {
+    display: inline-block;
+    margin-right: 0.35rem;
+    font-weight: 700;
+}
+
+.tour-page .hm-label--pickup::before {
+    content: "↑";
+    color: var(--tp-pickup-text);
+}
+
+.tour-page .hm-label--drop::before {
+    content: "↓";
+    color: var(--tp-drop-text);
+}
+
+.tour-page .is-autofilled {
+    animation: tp-autofill 0.9s var(--tp-ease);
+}
+
+/* ---- Mission form ---- */
+.tour-page .mission-form-card {
+    transition: border-color var(--tp-normal) var(--tp-ease), box-shadow var(--tp-normal) var(--tp-ease);
+}
+
+.tour-page .mission-form-card--editing {
+    border-color: var(--tp-accent);
+    box-shadow: 0 0 0 1px var(--tp-accent);
+}
+
+.tour-page .mission-form-step,
+.tour-page .mission-delivery {
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both;
+}
+
+.tour-page .mission-delivery {
+    border-left: 3px solid var(--tp-drop) !important;
+    background: var(--bs-tertiary-bg);
+}
+
+.tour-page .mission-form-next {
+    margin: 0;
+    color: var(--bs-secondary-color);
+}
+
+/* Live Component loading: the button is disabled by data-loading, the spinner follows. */
+.tour-page .hm-btn-spinner,
+.tour-page .route-panel-spinner {
+    display: none;
+}
+
+.tour-page button:disabled .hm-btn-spinner,
+.tour-page .is-loading .route-panel-spinner {
+    display: inline-block;
+}
+
+/* ---- Mission list ---- */
+.tour-page .mission-list {
+    transition: opacity var(--tp-fast) var(--tp-ease);
+}
+
+.tour-page .mission-list.is-busy,
+.tour-page .route-panel-body.is-busy {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.tour-page .mission-card {
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both;
+    transition: opacity var(--tp-normal) var(--tp-ease), background-color var(--tp-normal) var(--tp-ease), box-shadow var(--tp-fast) var(--tp-ease);
+}
+
+.tour-page .mission-card:hover {
+    box-shadow: var(--hm-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.tour-page .mission-card--flash {
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both, tp-flash 1.2s var(--tp-ease) both;
+}
+
+.tour-page .mission-card--done {
+    opacity: 0.6;
+}
+
+.tour-page .mission-reward {
+    color: var(--bs-emphasis-color);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tour-page .mission-type-badge {
+    border: 1px solid var(--bs-border-color);
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+}
+
+.tour-page .mission-progress-badge {
+    border: 1px solid var(--bs-primary-border-subtle);
+    background: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary-text-emphasis);
+}
+
+.tour-page .mission-path {
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--bs-border-color);
+}
+
+.tour-page .mission-path-line {
+    position: relative;
+    padding-left: 1.1rem;
+    line-height: 1.6;
+}
+
+.tour-page .mission-path-line::before {
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+}
+
+.tour-page .mission-path-line--pickup::before {
+    content: "↑";
+    color: var(--tp-pickup-text);
+}
+
+.tour-page .mission-path-line--drop::before {
+    content: "↓";
+    color: var(--tp-drop-text);
+}
+
+.tour-page .mission-path-line.is-done {
+    color: var(--bs-secondary-color);
+    text-decoration: line-through;
+}
+
+.tour-page .mission-path-line.is-done::before {
+    content: "✓";
+    color: var(--tp-pickup-text);
+}
+
+.tour-page .mission-card-actions .btn {
+    --bs-btn-padding-y: 0.15rem;
+    --bs-btn-padding-x: 0.5rem;
+}
+
+.tour-page .btn.is-armed {
+    background: var(--bs-danger);
+    border-color: var(--bs-danger);
+    color: #fff;
+    animation: tp-shake 0.25s var(--tp-ease);
+}
+
+/* ---- Route panel ---- */
+.tour-page .route-panel-body {
+    transition: opacity var(--tp-fast) var(--tp-ease);
+}
+
+/* Sticky panel: the stops scroll inside it instead of running past the bottom of the screen. */
+@media (min-width: 992px) {
+    .tour-page .route-panel {
+        max-height: calc(100vh - 6rem);
+    }
+
+    .tour-page .route-panel-body {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+.tour-page .route-legend {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.tour-page .route-legend-item::before {
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-right: 0.3rem;
+    border-radius: 2px;
+    content: "";
+}
+
+.tour-page .route-legend-item--pickup::before {
+    background: var(--tp-pickup);
+}
+
+.tour-page .route-legend-item--drop::before {
+    background: var(--tp-drop);
+}
+
+.tour-page .route-finished {
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both;
+}
+
+.tour-page .route-stop {
+    position: relative;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-body-bg);
+    animation: tp-enter var(--tp-normal) var(--tp-ease) both;
+    transition: opacity var(--tp-normal) var(--tp-ease), background-color var(--tp-normal) var(--tp-ease),
+        border-color var(--tp-normal) var(--tp-ease), box-shadow var(--tp-normal) var(--tp-ease);
+}
+
+.tour-page .route-stop--done {
+    background-color: var(--bs-tertiary-bg);
+    opacity: 0.6;
+}
+
+.tour-page .route-stop--current {
+    border-color: var(--tp-accent);
+    background-color: rgba(var(--tp-accent-rgb), 0.06);
+    box-shadow: 0 0 0 1px var(--tp-accent), 0 4px 14px rgba(var(--tp-accent-rgb), 0.18);
+}
+
+.tour-page .route-stop-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.4rem;
+}
+
+.tour-page .route-stop-location {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.tour-page .route-stop-number {
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.35rem;
+    border-radius: 0.75rem;
+    background: var(--bs-secondary-bg);
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tour-page .route-stop--current .route-stop-number {
+    background: var(--tp-accent);
+    color: var(--hm-accent-contrast, #fff);
+}
+
+.tour-page .route-stop-number--done {
+    background: var(--tp-pickup);
+    color: var(--bs-body-bg);
+    animation: tp-pop var(--tp-normal) var(--tp-ease) both;
+}
+
+.tour-page .route-stop-badge {
+    background: rgba(var(--tp-accent-rgb), 0.15);
+    color: var(--bs-primary-text-emphasis);
+    font-weight: 600;
+}
+
+.tour-page .route-stop-badge::before {
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.3rem;
+    border-radius: 50%;
+    background: var(--tp-accent);
+    content: "";
+    animation: tp-pulse 1.6s ease-in-out infinite;
+}
+
+.tour-page .route-stop-load {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.tour-page .route-load-bar {
+    display: inline-block;
+    width: 2.5rem;
+    height: 0.3rem;
+    overflow: hidden;
+    border-radius: 0.15rem;
+    background: var(--bs-secondary-bg);
+}
+
+.tour-page .route-load-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--tp-accent);
+    transition: width var(--tp-normal) var(--tp-ease);
+}
+
+/* Drag and drop */
+.tour-page .route-stop-handle {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: -0.35rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--bs-border-radius-sm);
+    background: transparent;
+    color: var(--bs-secondary-color);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    transition: background-color var(--tp-fast) var(--tp-ease), color var(--tp-fast) var(--tp-ease);
+}
+
+.tour-page .route-stop-handle:hover,
+.tour-page .route-stop-handle:focus-visible {
+    background: var(--bs-secondary-bg);
+    color: var(--bs-emphasis-color);
+}
+
+.tour-page .route-stop-handle:focus-visible {
+    outline: 2px solid var(--tp-accent);
+    outline-offset: 1px;
+}
+
+.tour-page .route-stop--movable:hover {
+    border-color: rgba(var(--tp-accent-rgb), 0.5);
+}
+
+.tour-page .route-stop--ghost {
+    border: 1px dashed var(--tp-accent);
+    background: rgba(var(--tp-accent-rgb), 0.08);
+    box-shadow: none;
+    opacity: 1;
+}
+
+.tour-page .route-stop--ghost > * {
+    visibility: hidden;
+}
+
+.tour-page .route-stop--chosen .route-stop-handle {
+    cursor: grabbing;
+}
+
+.route-stop--drag {
+    box-shadow: var(--hm-shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.25));
+    transform: rotate(1deg);
+}
+
+/* Actions (pickup / drop checkboxes) */
+.tour-page .route-action {
+    display: block;
+    margin-top: 0.35rem;
+    padding: 0.2rem 0.4rem 0.2rem 0.5rem;
+    border-left: 3px solid;
+    border-radius: 0 var(--bs-border-radius-sm) var(--bs-border-radius-sm) 0;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: color var(--tp-fast) var(--tp-ease), background-color var(--tp-fast) var(--tp-ease);
+}
+
+.tour-page .route-action:hover {
+    background: var(--bs-tertiary-bg);
+}
+
+.tour-page .route-action--pickup {
+    border-color: var(--tp-pickup);
+}
+
+.tour-page .route-action--drop {
+    border-color: var(--tp-drop);
+}
+
+.tour-page .route-action--pickup .route-action-icon {
+    color: var(--tp-pickup-text);
+    font-weight: 700;
+}
+
+.tour-page .route-action--drop .route-action-icon {
+    color: var(--tp-drop-text);
+    font-weight: 700;
+}
+
+.tour-page .route-action-detail {
+    display: block;
+    margin-left: 1.5rem;
+}
+
+/* :has() gives instant feedback on tick, before the server answers. */
+.tour-page .route-action--done,
+.tour-page .route-action:has(input:checked) {
+    color: var(--bs-secondary-color);
+    text-decoration: line-through;
+}
+
+.tour-page .route-action input:checked {
+    animation: tp-pop var(--tp-normal) var(--tp-ease);
+}
+
+.tour-page .route-action input:focus-visible {
+    box-shadow: var(--hm-focus-ring, 0 0 0 0.2rem rgba(var(--tp-accent-rgb), 0.35));
+}
+
+/* ---- Animations ---- */
+@keyframes tp-enter {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+@keyframes tp-flash {
+    0%,
+    40% {
+        border-color: var(--tp-pickup);
+        box-shadow: 0 0 0 2px rgba(var(--hm-pickup-rgb, 46, 158, 91), 0.45);
+    }
+}
+
+@keyframes tp-autofill {
+    0%,
+    30% {
+        border-color: var(--tp-accent);
+        box-shadow: 0 0 0 0.2rem rgba(var(--tp-accent-rgb), 0.3);
+    }
+}
+
+@keyframes tp-pop {
+    50% {
+        transform: scale(1.25);
+    }
+}
+
+@keyframes tp-shake {
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+@keyframes tp-pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tour-page *,
+    .route-stop--drag {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .route-stop--drag {
+        transform: none;
+    }
+}

@@ -12,6 +12,7 @@ use App\Security\TourVoter;
 use App\Service\Tour\MissionWriter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
@@ -39,8 +40,13 @@ final class MissionBoard extends AbstractController
     #[LiveProp]
     public int $formVersion = 0;
 
-    public function __construct(private readonly MissionWriter $missionWriter)
-    {
+    /** Retour visuel du dernier enregistrement : valable pour ce seul rendu. */
+    public ?int $flashedMissionId = null;
+
+    public function __construct(
+        private readonly MissionWriter $missionWriter,
+        private readonly TranslatorInterface $translator,
+    ) {
     }
 
     #[PostHydrate]
@@ -59,6 +65,8 @@ final class MissionBoard extends AbstractController
     {
         $this->submitForm();
         $this->missionWriter->save($this->tour, $this->editedMission, $this->getForm()->getData());
+        $this->flashedMissionId = $this->editedMission?->id() ?? ($this->tour->missions()->last() ?: null)?->id();
+        $this->toast(null === $this->editedMission ? 'mission.board.added' : 'mission.board.saved');
         $this->emit('missionsChanged');
         $this->restart(null);
     }
@@ -79,6 +87,7 @@ final class MissionBoard extends AbstractController
     public function remove(#[LiveArg] int $id): void
     {
         $this->missionWriter->remove($this->missionOfTour($id));
+        $this->toast('mission.board.removed');
         $this->emit('missionsChanged');
         $this->restart(null);
     }
@@ -97,6 +106,11 @@ final class MissionBoard extends AbstractController
         $this->isValidated = false;
         $this->validatedFields = [];
         $this->resetForm();
+    }
+
+    private function toast(string $message): void
+    {
+        $this->dispatchBrowserEvent('toast:show', ['message' => $this->translator->trans($message), 'variant' => 'success']);
     }
 
     private function missionOfTour(int $id): Mission

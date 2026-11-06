@@ -1,4 +1,5 @@
 menu:
+    account: Account
     profile: Profile
     tours: My tours
     history: History
@@ -8,6 +9,7 @@ menu:
 
 login:
     title: Log in
+    subtitle: Welcome back, hauler.
     email: Email
     password: Password
     submit: Log in
@@ -16,6 +18,7 @@ login:
 
 registration:
     title: Sign up
+    subtitle: Keep your tours and your mission history.
     submit: Create my account
     has_account: Already have an account?
     login_link: Log in
@@ -41,6 +44,7 @@ flash:
 history:
     title: History
     empty: No finished mission yet. Tick the pickups and deliveries of a tour to fill this page.
+    empty_cta: Open my current tour
     reward: '{amount, number, integer} aUEC'
     finished_at: '{date, date, medium} {date, time, short}'
     total:

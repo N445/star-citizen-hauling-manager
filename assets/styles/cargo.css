@@ -1,0 +1,272 @@
+/* Soute 3D : scène, légende, info-bulle, état vide. */
+.cargo-panel {
+    --cargo-pickup: var(--hm-pickup, #2e9e5b);
+    --cargo-drop: var(--hm-drop, #e8890c);
+    --cargo-stacked: var(--bs-danger, #dc3545);
+    --cargo-ease: var(--hm-ease, cubic-bezier(0.2, 0.8, 0.2, 1));
+    --cargo-fast: var(--hm-duration-fast, 120ms);
+    --cargo-normal: var(--hm-duration-normal, 200ms);
+}
+
+.cargo-body {
+    padding: 0.5rem;
+}
+
+.cargo-stage {
+    position: relative;
+    overflow: hidden;
+    border-radius: calc(var(--bs-border-radius) - 1px);
+    background:
+        radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--bs-body-color) 5%, transparent), transparent 70%),
+        var(--bs-tertiary-bg);
+}
+
+.cargo-stage canvas {
+    display: block;
+    cursor: grab;
+    touch-action: none;
+    animation: cargo-fade-in var(--cargo-normal) var(--cargo-ease);
+}
+
+.cargo-stage canvas:active {
+    cursor: grabbing;
+}
+
+.cargo-stage canvas.is-pointing {
+    cursor: pointer;
+}
+
+.cargo-stage__reset {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem;
+    border: 1px solid var(--bs-border-color);
+    background: color-mix(in srgb, var(--bs-body-bg) 80%, transparent);
+    color: var(--bs-secondary-color);
+    backdrop-filter: blur(4px);
+    transition: color var(--cargo-fast) var(--cargo-ease), transform var(--cargo-fast) var(--cargo-ease), border-color var(--cargo-fast) var(--cargo-ease);
+}
+
+.cargo-stage__reset:hover,
+.cargo-stage__reset:focus-visible {
+    color: var(--bs-emphasis-color);
+    border-color: var(--bs-secondary-color);
+}
+
+.cargo-stage__reset:active {
+    transform: scale(0.92);
+}
+
+.cargo-stage__reset .hm-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.cargo-stage__hint {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.4rem;
+    margin: 0;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--bs-border-radius-pill);
+    background: color-mix(in srgb, var(--bs-body-bg) 70%, transparent);
+    color: var(--bs-secondary-color);
+    font-size: 0.75rem;
+    pointer-events: none;
+    transition: opacity var(--cargo-normal) var(--cargo-ease);
+}
+
+.cargo-stage:hover .cargo-stage__hint {
+    opacity: 0.35;
+}
+
+/* Légende */
+.cargo-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+}
+
+.cargo-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    transition: opacity var(--cargo-normal) var(--cargo-ease);
+}
+
+.cargo-legend__item[data-empty] {
+    opacity: 0.45;
+}
+
+.cargo-legend__item--stacked[data-empty] {
+    display: none;
+}
+
+.cargo-legend__count {
+    color: var(--bs-emphasis-color);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.cargo-legend__swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1.5px solid var(--bs-secondary-color);
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--bs-secondary-color) 55%, transparent);
+}
+
+.cargo-legend__item--toLoad .cargo-legend__swatch {
+    border-color: var(--cargo-pickup);
+    background: color-mix(in srgb, var(--cargo-pickup) 25%, transparent);
+}
+
+.cargo-legend__item--toUnload .cargo-legend__swatch {
+    border-color: var(--cargo-drop);
+    background: color-mix(in srgb, var(--bs-secondary-color) 55%, transparent);
+}
+
+.cargo-legend__item--stacked {
+    color: var(--cargo-stacked);
+}
+
+.cargo-legend__item--stacked .cargo-legend__swatch {
+    border-color: var(--cargo-stacked);
+    background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--cargo-stacked) 45%, transparent) 0 2px, transparent 2px 4px);
+}
+
+/* Info-bulle d'une caisse */
+.cargo-tooltip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    max-width: 16rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--bs-border-color);
+    border-left: 3px solid var(--crate-color, var(--bs-secondary-color));
+    border-radius: var(--bs-border-radius);
+    background: color-mix(in srgb, var(--bs-body-bg) 92%, transparent);
+    box-shadow: var(--bs-box-shadow-sm);
+    color: var(--bs-body-color);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    pointer-events: none;
+    opacity: 0;
+    backdrop-filter: blur(6px);
+    transition: opacity var(--cargo-fast) var(--cargo-ease);
+}
+
+.cargo-tooltip.is-visible {
+    opacity: 1;
+}
+
+.cargo-tooltip__title {
+    font-weight: 600;
+    color: var(--bs-emphasis-color);
+}
+
+.cargo-tooltip__resource {
+    color: var(--crate-color);
+    filter: brightness(0.8);
+}
+
+[data-bs-theme="dark"] .cargo-tooltip__resource {
+    filter: brightness(1.25);
+}
+
+.cargo-tooltip__mission,
+.cargo-tooltip__dropoff {
+    color: var(--bs-secondary-color);
+}
+
+.cargo-tooltip__status {
+    display: inline-block;
+    margin-top: 0.2rem;
+    padding: 0 0.4rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-pill);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.cargo-tooltip[data-status="toLoad"] .cargo-tooltip__status {
+    border-color: var(--cargo-pickup);
+    color: var(--cargo-pickup);
+}
+
+.cargo-tooltip[data-status="toUnload"] .cargo-tooltip__status {
+    border-color: var(--cargo-drop);
+    color: var(--cargo-drop);
+}
+
+.cargo-tooltip__warning {
+    margin-top: 0.2rem;
+    color: var(--cargo-stacked);
+    font-weight: 600;
+}
+
+/* État vide */
+.cargo-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1rem;
+    border: 1px dashed var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    text-align: center;
+    animation: cargo-fade-in var(--cargo-normal) var(--cargo-ease);
+}
+
+.cargo-empty[hidden] {
+    display: none;
+}
+
+.cargo-empty__icon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.75rem;
+    color: var(--bs-secondary-color);
+    opacity: 0.6;
+}
+
+.cargo-empty__title {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.cargo-empty__text {
+    margin: 0;
+    color: var(--bs-secondary-color);
+    font-size: 0.875rem;
+}
+
+@keyframes cargo-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cargo-stage canvas,
+    .cargo-empty {
+        animation: none;
+    }
+
+    .cargo-tooltip,
+    .cargo-legend__item,
+    .cargo-stage__reset,
+    .cargo-stage__hint {
+        transition: none;
+    }
+}

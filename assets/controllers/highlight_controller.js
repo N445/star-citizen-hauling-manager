@@ -6,11 +6,13 @@ export default class extends Controller {
         this.onPointerOver = (event) => this.hover(event.target);
         this.onHighlight = (event) => this.apply(event.detail.key);
         this.element.addEventListener('pointerover', this.onPointerOver);
+        this.element.addEventListener('focusin', this.onPointerOver);
         window.addEventListener('cargo:highlight', this.onHighlight);
     }
 
     disconnect() {
         this.element.removeEventListener('pointerover', this.onPointerOver);
+        this.element.removeEventListener('focusin', this.onPointerOver);
         window.removeEventListener('cargo:highlight', this.onHighlight);
     }
 

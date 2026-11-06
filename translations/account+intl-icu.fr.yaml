@@ -1,4 +1,5 @@
 menu:
+    account: Compte
     profile: Profil
     tours: Mes tournées
     history: Historique
@@ -8,6 +9,7 @@ menu:
 
 login:
     title: Connexion
+    subtitle: Bon retour, transporteur.
     email: E-mail
     password: Mot de passe
     submit: Se connecter
@@ -16,6 +18,7 @@ login:
 
 registration:
     title: Inscription
+    subtitle: Garde tes tournées et l'historique de tes missions.
     submit: Créer mon compte
     has_account: Déjà un compte ?
     login_link: Connecte-toi
@@ -41,6 +44,7 @@ flash:
 history:
     title: Historique
     empty: Aucune mission terminée pour l'instant. Coche les ramassages et livraisons d'une tournée pour remplir cette page.
+    empty_cta: Ouvrir ma tournée en cours
     reward: '{amount, number, integer} aUEC'
     finished_at: '{date, date, medium} {date, time, short}'
     total:

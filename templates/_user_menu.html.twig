@@ -1,12 +1,28 @@
 {% trans_default_domain 'account' %}
-<ul class="navbar-nav flex-row align-items-center gap-3 ms-auto">
+{% import '_icons.html.twig' as icons %}
+{% set route = app.current_route %}
+<ul class="navbar-nav flex-row align-items-center gap-1">
     {% if app.user %}
-        <li class="nav-item"><a class="nav-link" href="{{ path('tour_index') }}">{{ 'menu.tours'|trans }}</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ path('history') }}">{{ 'menu.history'|trans }}</a></li>
-        <li class="nav-item d-none d-md-block"><a class="nav-link" href="{{ path('profile') }}" title="{{ 'menu.profile'|trans }}">{{ app.user.email }}</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ path('app_logout') }}">{{ 'menu.logout'|trans }}</a></li>
+        <li class="nav-item">
+            <a class="nav-link d-inline-flex align-items-center gap-1{{ route == 'tour_index' ? ' active' }}" href="{{ path('tour_index') }}"{% if route == 'tour_index' %} aria-current="page"{% endif %}>{{ icons.icon('list') }}<span>{{ 'menu.tours'|trans }}</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-inline-flex align-items-center gap-1{{ route == 'history' ? ' active' }}" href="{{ path('history') }}"{% if route == 'history' %} aria-current="page"{% endif %}>{{ icons.icon('clock') }}<span>{{ 'menu.history'|trans }}</span></a>
+        </li>
+        <li class="nav-item dropdown">
+            <button class="btn btn-sm btn-outline-secondary hm-icon-btn dropdown-toggle{{ route == 'profile' ? ' active' }}" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'menu.account'|trans }}">
+                {{ icons.icon('person') }}
+                <span class="d-none d-lg-inline text-truncate" style="max-width: 14rem">{{ app.user.email }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><span class="dropdown-item-text small text-body-secondary text-truncate d-block" style="max-width: 18rem">{{ app.user.email }}</span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('profile') }}">{{ icons.icon('person') }}{{ 'menu.profile'|trans }}</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_logout') }}">{{ icons.icon('logout') }}{{ 'menu.logout'|trans }}</a></li>
+            </ul>
+        </li>
     {% else %}
-        <li class="nav-item"><a class="nav-link" href="{{ path('app_login') }}">{{ 'menu.login'|trans }}</a></li>
-        <li class="nav-item"><a class="btn btn-outline-light btn-sm" href="{{ path('app_register') }}">{{ 'menu.register'|trans }}</a></li>
+        <li class="nav-item"><a class="nav-link{{ route == 'app_login' ? ' active' }}" href="{{ path('app_login') }}">{{ 'menu.login'|trans }}</a></li>
+        <li class="nav-item"><a class="btn btn-primary btn-sm" href="{{ path('app_register') }}">{{ 'menu.register'|trans }}</a></li>
     {% endif %}
 </ul>

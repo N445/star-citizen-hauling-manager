@@ -1,20 +1,44 @@
-<div class="card mb-2 {{ mission.isDone ? 'mission-card--done' }}" data-highlight-key="{{ mission_token(mission.id) }}"
-     data-highlight-tokens="{{ ([mission_token(mission.id)]|merge(mission.deliveries|map(d => delivery_token(d.id)))|merge(mission.deliveries|map(d => resource_token(d.resource))))|join(' ') }}">
-    <div class="card-body py-2">
-        <div class="d-flex justify-content-between">
-            <strong>{{ tour.missionLabel(mission) }}{% if mission.isDone %} <span class="badge text-bg-secondary">{{ mission.durationInSeconds is null ? 'mission.done'|trans : 'mission.done_in'|trans({duration: mission.durationInSeconds|duration}) }}</span>{% endif %}</strong>
-            <span>{{ 'money.auec'|trans({amount: mission.reward}) }}</span>
+{% import '_icons.html.twig' as icons %}
+{% set deliveredCount = mission.deliveries|filter(d => d.isDelivered)|length %}
+{% set label = tour.missionLabel(mission) %}
+<article id="mission-card-{{ mission.id }}" class="card mb-2 mission-card {{ mission.isDone ? 'mission-card--done' }} {{ flashed|default(false) ? 'mission-card--flash' }}"
+         aria-label="{{ label }}" data-highlight-key="{{ mission_token(mission.id) }}"
+         data-highlight-tokens="{{ ([mission_token(mission.id)]|merge(mission.deliveries|map(d => delivery_token(d.id)))|merge(mission.deliveries|map(d => resource_token(d.resource))))|join(' ') }}">
+    <div class="card-body py-2 px-3">
+        <div class="d-flex justify-content-between align-items-baseline gap-2">
+            <strong class="text-truncate">{{ label }}</strong>
+            <span class="mission-reward text-nowrap">{{ 'money.auec'|trans({amount: mission.reward}) }}</span>
         </div>
-        <div class="small text-body-secondary mb-1">{{ mission.type.shortLabel|trans }}</div>
-        <div class="small">{{ mission.pickups|join(' ' ~ 'mission.pickups_separator'|trans ~ ' ') }}</div>
-        <ul class="small list-unstyled mb-2">
-            {% for delivery in mission.deliveries %}
-                <li>→ {{ 'mission.delivery_line'|trans({dropoff: delivery.dropoff, quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}</li>
-            {% endfor %}
-        </ul>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-primary" data-action="live#action" data-live-action-param="edit" data-live-id-param="{{ mission.id }}">{{ 'action.edit'|trans }}</button>
-            <button type="button" class="btn btn-sm btn-outline-danger" data-action="live#action" data-live-action-param="remove" data-live-id-param="{{ mission.id }}">{{ 'action.remove'|trans }}</button>
+        <div class="d-flex flex-wrap align-items-center gap-1 small text-body-secondary mb-2">
+            <span class="badge mission-type-badge">{{ mission.type.shortLabel|trans }}</span>
+            {% if mission.isDone %}
+                <span class="badge text-bg-success">{{ icons.icon('check') }} {{ mission.durationInSeconds is null ? 'mission.done'|trans : 'mission.done_in'|trans({duration: mission.durationInSeconds|duration}) }}</span>
+            {% elseif mission.startedAt is not null %}
+                <span class="badge mission-progress-badge">{{ 'mission.progress'|trans({done: deliveredCount, total: mission.deliveries|length}) }}</span>
+            {% endif %}
+        </div>
+        <div class="mission-path small">
+            <div class="mission-path-line mission-path-line--pickup">
+                <span class="visually-hidden">{{ 'route.legend.pickup'|trans }}</span>
+                {{ mission.pickups|join(' ' ~ 'mission.pickups_separator'|trans ~ ' ') }}
+            </div>
+            <ul class="list-unstyled mb-0">
+                {% for delivery in mission.deliveries %}
+                    <li class="mission-path-line mission-path-line--drop {{ delivery.isDelivered ? 'is-done' }}">
+                        <span class="visually-hidden">{{ 'route.legend.drop'|trans }}</span>
+                        {{ 'mission.delivery_line'|trans({dropoff: delivery.dropoff, quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="mission-card-actions d-flex justify-content-end gap-1 mt-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="live#action" data-live-action-param="edit" data-live-id-param="{{ mission.id }}"
+                    aria-label="{{ 'action.edit'|trans }} — {{ label }}">✎ {{ 'action.edit'|trans }}</button>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-controller="confirm" data-confirm-label-value="{{ 'mission.confirm_remove'|trans }}"
+                    data-action="confirm#ask live#action" data-live-action-param="remove" data-live-id-param="{{ mission.id }}"
+                    data-loading="action(remove)|addAttribute(disabled)"
+                    aria-label="{{ 'action.remove'|trans }} — {{ label }}">{{ 'action.remove'|trans }}</button>
         </div>
     </div>
-</div>
+</article>

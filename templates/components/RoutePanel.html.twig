@@ -1,6 +1,11 @@
-<div {{ attributes.defaults({class: 'card sticky-lg-top cargo-panel'}) }}>
-    <div class="card-header">{{ 'route.title'|trans }}</div>
-    <div class="card-body">
+{% import '_icons.html.twig' as icons %}
+<div {{ attributes.defaults({class: 'card sticky-lg-top cargo-panel route-panel'}) }}>
+    <div class="card-header d-flex align-items-center gap-2" data-loading="delay(150)|addClass(is-loading)">
+        <span class="step-badge" aria-hidden="true">3</span>
+        <span>{{ 'route.title'|trans }}</span>
+        <span class="spinner-border spinner-border-sm text-primary ms-auto route-panel-spinner" role="status"><span class="visually-hidden">{{ 'route.loading'|trans }}</span></span>
+    </div>
+    <div class="card-body route-panel-body" data-loading="delay(150)|addClass(is-busy)">
         {% set route = computed.route %}
         {% set locked = route is not null and route.started %}
         <div class="btn-group w-100 mb-2" role="group" aria-label="{{ 'route.mode.aria'|trans }}">
@@ -10,7 +15,7 @@
                 <label class="btn btn-sm btn-outline-primary" for="route-mode-{{ routeMode.value }}">{{ routeMode.label|trans }}</label>
             {% endfor %}
         </div>
-        <p class="small text-body-secondary">{{ (locked ? 'route.locked' : mode.description)|trans }}</p>
+        <p class="small text-body-secondary">{% if locked %}🔒 {% endif %}{{ (locked ? 'route.locked' : mode.description)|trans }}</p>
 
         {% set cargo = this.cargoView %}
         <div hidden data-controller="cargo-plan" data-cargo-plan-plan-value="{{ cargo|json_encode }}"></div>
@@ -21,22 +26,30 @@
             <div class="alert alert-warning py-2 small">{{ 'cargo.warning.unplaced'|trans({quantity: cargo.unplaced}) }}</div>
         {% endif %}
         {% if route is null %}
-            <div class="alert alert-warning mb-0">{{ this.error|trans }}</div>
+            <div class="alert alert-danger mb-0 d-flex gap-2" role="alert">{{ icons.icon('warning', 'flex-shrink-0 mt-1') }}<span>{{ this.error|trans }}</span></div>
         {% elseif tour.missions is empty %}
-            <p class="text-body-secondary mb-0">{{ 'route.no_missions'|trans }}</p>
+            <div class="hm-empty">
+                <div class="hm-empty-icon">{{ icons.icon('list') }}</div>
+                <strong>{{ 'route.no_missions'|trans }}</strong>
+                <div class="small text-body-secondary">{{ 'route.empty_hint'|trans }}</div>
+            </div>
         {% else %}
             {% if route.isFinished %}
-                <div class="alert alert-success py-2">{{ 'route.finished'|trans }}</div>
+                <div class="alert alert-success py-2 route-finished" role="status">{{ icons.icon('success', 'me-1') }} {{ 'route.finished'|trans }}</div>
             {% endif %}
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
                 <span><strong>{{ 'route.stop_count'|trans({count: route.moveCount}) }}</strong>
                     {% if route.start is null %}<small class="text-body-secondary">— {{ 'route.no_start'|trans }}</small>{% endif %}</span>
                 {% if route.customOrder %}
-                    <button type="button" class="btn btn-sm btn-link p-0" data-action="live#action" data-live-action-param="resetOrder">{{ 'route.reset_order'|trans }}</button>
+                    <button type="button" class="btn btn-sm btn-link p-0" data-action="live#action" data-live-action-param="resetOrder">↺ {{ 'route.reset_order'|trans }}</button>
                 {% endif %}
             </div>
+            <div class="route-legend small text-body-secondary mb-2" aria-hidden="true">
+                <span class="route-legend-item route-legend-item--pickup">{{ 'route.legend.pickup'|trans }}</span>
+                <span class="route-legend-item route-legend-item--drop">{{ 'route.legend.drop'|trans }}</span>
+            </div>
             <p class="small text-body-secondary mb-2">{{ 'route.reorder_help'|trans }}</p>
-            <ol class="route list-unstyled mb-0" data-controller="route-sortable">
+            <ol class="route list-unstyled mb-0" data-controller="route-sortable" aria-label="{{ 'route.title'|trans }}">
                 {% for stop in route.stops %}
                     {% set isStart = loop.first and route.start is not null %}
                     {{ include('components/_route_stop.html.twig', {
@@ -44,7 +57,7 @@
                         label: isStart ? 'route.start'|trans : (route.start is null ? loop.index : loop.index0),
                         movable: not isStart and not stop.isDone,
                         step: loop.index0,
-                        current: loop.index0 == cargo.currentStep,
+                        current: loop.index0 == cargo.currentStep and not route.isFinished,
                     }) }}
                 {% endfor %}
             </ol>

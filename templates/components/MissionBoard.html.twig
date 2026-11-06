@@ -1,7 +1,12 @@
-<div {{ attributes }}>
-    <div class="card mb-3 {{ editedMission ? 'border-primary' }}">
+{% import '_icons.html.twig' as icons %}
+<div {{ attributes.defaults({class: 'mission-board'}) }}>
+    <div class="card mb-3 mission-form-card {{ editedMission ? 'mission-form-card--editing' }}"
+         data-controller="reveal" data-reveal-active-value="{{ editedMission ? 'true' : 'false' }}" data-reveal-version-value="{{ formVersion }}">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>{{ (editedMission ? 'mission.board.edit_title' : 'mission.board.new_title')|trans }}</span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="step-badge" aria-hidden="true">2</span>
+                <span>{{ (editedMission ? 'mission.board.edit_title' : 'mission.board.new_title')|trans }}</span>
+            </span>
             {% if editedMission %}
                 <button type="button" class="btn btn-sm btn-link p-0" data-action="live#action" data-live-action-param="cancel">{{ 'action.cancel'|trans }}</button>
             {% endif %}
@@ -12,40 +17,53 @@
                 {{ form_row(form.type, {help: type ? type.rule|trans({}, 'validators') : form.type.vars.help}) }}
 
                 {% if type %}
-                    <div class="row g-2">
-                        <div class="col-6">{{ form_row(form.name) }}</div>
-                        <div class="col-6">{{ form_row(form.reward) }}</div>
+                    <div class="mission-form-step">
+                        <div class="row g-2">
+                            <div class="col-6">{{ form_row(form.name) }}</div>
+                            <div class="col-6">{{ form_row(form.reward) }}</div>
+                        </div>
+                        {{ include('form/_searchable_row.html.twig', {
+                            field: form.pickups,
+                            label: 'mission.form.pickup_count'|trans({count: type.hasSeveralPickups ? 2 : 1}),
+                            label_class: 'form-label hm-label hm-label--pickup',
+                            id_suffix: '-' ~ type.value,
+                            extra_attr: {'data-tom-select-multiple-value': type.hasSeveralPickups ? 'true' : 'false'},
+                        }) }}
                     </div>
-                    {{ include('form/_searchable_row.html.twig', {
-                        field: form.pickups,
-                        label: 'mission.form.pickup_count'|trans({count: type.hasSeveralPickups ? 2 : 1}),
-                        id_suffix: '-' ~ type.value,
-                        extra_attr: {'data-tom-select-multiple-value': type.hasSeveralPickups ? 'true' : 'false'},
-                    }) }}
 
-                    {% if form.pickups.vars.value is not empty %}
-                        <h3 class="h6 mt-3 mb-2">{{ 'mission.form.deliveries'|trans }}</h3>
-                        {{ form_errors(form.deliveries) }}
-                        {% for delivery in form.deliveries %}
-                            <div class="border rounded p-2 mb-2">
-                                <div class="row g-2 mb-2">
-                                    <div class="col">
-                                        {{ include('form/_searchable_row.html.twig', {field: delivery.dropoff, row_class: 'mb-0', label_class: 'visually-hidden'}) }}
+                    {% if form.pickups.vars.value is empty %}
+                        <p class="form-text mission-form-next">{{ 'mission.form.pickups_first'|trans }}</p>
+                    {% else %}
+                        <div class="mission-form-step">
+                            <h3 class="h6 mt-3 mb-1 hm-label hm-label--drop">{{ 'mission.form.deliveries'|trans }}</h3>
+                            <p class="form-text mt-0 mb-2">{{ 'mission.form.deliveries_help'|trans }}</p>
+                            {{ form_errors(form.deliveries) }}
+                            {% for delivery in form.deliveries %}
+                                <fieldset class="mission-delivery border rounded p-2 mb-2">
+                                    <legend class="visually-hidden">{{ 'mission.form.dropoff'|trans }} {{ loop.index }}</legend>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col">
+                                            {{ include('form/_searchable_row.html.twig', {field: delivery.dropoff, row_class: 'mb-0', label_class: 'visually-hidden'}) }}
+                                        </div>
+                                        <div class="col-auto">{{ form_widget(delivery.vars.button_delete, {attr: delivery.vars.button_delete.vars.attr|merge({'aria-label': 'mission.form.remove_delivery'|trans})}) }}</div>
                                     </div>
-                                    <div class="col-auto">{{ form_widget(delivery.vars.button_delete) }}</div>
-                                </div>
-                                <div class="row g-2">
-                                    <div class="col">
-                                        {{ include('form/_searchable_row.html.twig', {field: delivery.resource, row_class: 'mb-0', label_class: 'visually-hidden'}) }}
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            {{ include('form/_searchable_row.html.twig', {field: delivery.resource, row_class: 'mb-0', label_class: 'visually-hidden'}) }}
+                                        </div>
+                                        <div class="col-4">{{ form_row(delivery.quantity, {label_attr: {class: 'visually-hidden'}, row_attr: {class: 'mb-0'}}) }}</div>
                                     </div>
-                                    <div class="col-4">{{ form_row(delivery.quantity, {label_attr: {class: 'visually-hidden'}, row_attr: {class: 'mb-0'}}) }}</div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                        {{ form_widget(form.deliveries.vars.button_add) }}
+                                </fieldset>
+                            {% endfor %}
+                            {{ form_widget(form.deliveries.vars.button_add) }}
 
-                        <div class="mt-3">{{ form_errors(form) }}</div>
-                        <button class="btn btn-primary w-100 mt-2">{{ (editedMission ? 'mission.form.save' : 'mission.form.submit')|trans }}</button>
+                            <div class="mt-3">{{ form_errors(form) }}</div>
+                            <button class="btn btn-primary w-100 mt-2 d-inline-flex justify-content-center align-items-center gap-2"
+                                    data-loading="action(save)|addAttribute(disabled)">
+                                <span class="spinner-border spinner-border-sm hm-btn-spinner" aria-hidden="true"></span>
+                                {{ (editedMission ? 'mission.form.save' : 'mission.form.submit')|trans }}
+                            </button>
+                        </div>
                     {% endif %}
                 {% endif %}
                 {% if form._token is defined %}{{ form_widget(form._token) }}{% endif %}
@@ -53,15 +71,21 @@
         </div>
     </div>
 
-    <h2 class="h5 d-flex justify-content-between">
-        <span>{{ 'mission.board.list_title'|trans }}</span>
-        <small class="text-body-secondary">{{ 'mission.board.totals'|trans({quantity: tour.totalQuantity, capacity: tour.capacity, reward: tour.totalReward}) }}</small>
+    <h2 class="h5 d-flex justify-content-between align-items-baseline gap-2">
+        <span>{{ 'mission.board.list_title'|trans }} <span class="badge rounded-pill text-bg-secondary align-middle">{{ tour.missions|length }}</span></span>
+        <small class="text-body-secondary text-end">{{ 'mission.board.totals'|trans({quantity: tour.totalQuantity, capacity: tour.capacity, reward: tour.totalReward}) }}</small>
     </h2>
-    {% for mission in tour.missions %}
-        {% if editedMission is null or mission.id != editedMission.id %}
-            {{ include('components/_mission_summary.html.twig') }}
-        {% endif %}
-    {% else %}
-        <p class="text-body-secondary">{{ 'mission.board.empty'|trans }}</p>
-    {% endfor %}
+    <div class="mission-list" data-loading="action(remove)|addClass(is-busy)">
+        {% for mission in tour.missions %}
+            {% if editedMission is null or mission.id != editedMission.id %}
+                {{ include('components/_mission_summary.html.twig', {flashed: mission.id == flashedMissionId}) }}
+            {% endif %}
+        {% else %}
+            <div class="hm-empty">
+                <div class="hm-empty-icon">{{ icons.icon('plus') }}</div>
+                <strong>{{ 'mission.board.empty'|trans }}</strong>
+                <div class="small text-body-secondary">{{ 'mission.board.empty_hint'|trans }}</div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
