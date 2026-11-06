@@ -81,6 +81,6 @@
         <main id="main" class="{% block main_class %}container{% endblock %} hm-main pb-5" tabindex="-1">
             {% block body %}{% endblock %}
         </main>
-        {% if umami_website_id %}<script defer src="{{ path('stats_script') }}" data-website-id="{{ umami_website_id }}" data-host-url="/_s" data-do-not-track="true"></script>{% endif %}
+        {% if umami_website_id %}<script defer src="{{ path('stats_script') }}" data-website-id="{{ umami_website_id }}" data-host-url="/_s"></script>{% endif %}
     </body>
 </html>
