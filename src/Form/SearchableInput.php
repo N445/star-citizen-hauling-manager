@@ -25,10 +25,10 @@ final class SearchableInput
     }
 
     /** @return array<string, string> */
-    public static function locations(bool $multiple = false): array
+    public static function locations(LocationCatalog $catalog, bool $multiple = false): array
     {
-        return self::attributes(LocationCatalog::suggestions(), $multiple) + [
-            'data-tom-select-optgroups-value' => json_encode(LocationCatalog::optgroups(), JSON_THROW_ON_ERROR),
+        return self::attributes($catalog->suggestions(), $multiple) + [
+            'data-tom-select-optgroups-value' => json_encode($catalog->optgroups(), JSON_THROW_ON_ERROR),
         ];
     }
 }

@@ -12,12 +12,13 @@ const ARROW_LENGTH = 3;
 const ARROW_GAP = 0.4;
 const CRATE_GAP = 0.08;
 const DROP_HEIGHT = 1.5;
-const DURATION = { appear: 420, leave: 260, dim: 160, camera: 650, pulse: 2400 };
+const DURATION = { appear: 420, leave: 380, dim: 160, camera: 650, pulse: 2400 };
 const PULSES = 3;
 
 const range = (count) => Array.from({ length: count + 1 }, (_, index) => index);
 const point = (x, y, z) => new THREE.Vector3(x, y, z);
 const easeOut = (k) => 1 - (1 - k) ** 3;
+const easeIn = (k) => k ** 3;
 const easeInOut = (k) => (k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2);
 
 const floorLines = ({ width, length }) => [
@@ -278,7 +279,7 @@ export default class extends Controller {
         });
     }
 
-    // Garde les caisses inchangées, fait tomber les nouvelles et fondre celles qui partent.
+    // Garde les caisses inchangées, fait tomber les nouvelles et remonter celles qui partent.
     syncCrates(animate) {
         const crates = this.grids.length === 0 ? [] : this.cargoPlan.crates ?? [];
         const next = new Map(crates.map((crate) => [crateId(crate), crate]));
@@ -360,12 +361,14 @@ export default class extends Controller {
             return;
         }
 
+        // Inverse de l'arrivée : la caisse est soulevée et s'efface en montant.
         const start = userData.appear;
+        const fromY = mesh.position.y;
         this.tween(DURATION.leave, (k) => {
             userData.appear = start * (1 - k);
-            mesh.scale.setScalar(1 - 0.15 * k);
+            mesh.position.y = fromY + k * DROP_HEIGHT;
             this.paint(mesh);
-        }, done);
+        }, done, 0, easeIn);
     }
 
     // Les caisses de l'arrêt courant (à charger / à décharger) clignotent quelques fois puis restent colorées.

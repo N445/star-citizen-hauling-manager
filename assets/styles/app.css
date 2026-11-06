@@ -206,6 +206,7 @@ a {
    Navbar
    ========================================================================== */
 .hm-navbar {
+    z-index: 1030;
     border-bottom: 1px solid var(--hm-border);
     background-color: var(--hm-navbar-bg);
     backdrop-filter: saturate(160%) blur(10px);
@@ -477,7 +478,7 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
 }
 
 .ts-dropdown {
-    z-index: 1030;
+    z-index: 1025;
     border-color: var(--hm-border);
     border-radius: var(--hm-radius-sm);
     background: var(--hm-surface-raised);
@@ -683,8 +684,10 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
 /* ==========================================================================
    Tour page shared pieces (kept selectors, restyled with tokens)
    ========================================================================== */
+/* Empilement : panneaux collants (1010) < toasts (1015) < listes Tom Select (1025) < barre de navigation (1030). */
 .cargo-panel {
     top: 5rem;
+    z-index: 1010;
 }
 
 [data-cargo-grid-target="canvas"] canvas {

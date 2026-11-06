@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Catalog\LocationCatalog;
 use App\Entity\Commodity;
 use App\Form\Data\DeliveryData;
 use App\Repository\CommodityRepository;
@@ -16,8 +17,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class DeliveryFormType extends AbstractType
 {
-    public function __construct(private readonly CommodityRepository $commodityRepository)
-    {
+    public function __construct(
+        private readonly CommodityRepository $commodityRepository,
+        private readonly LocationCatalog $locationCatalog,
+    ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -25,7 +28,7 @@ final class DeliveryFormType extends AbstractType
         $builder
             ->add('dropoff', TextType::class, [
                 'label' => 'mission.form.dropoff',
-                'attr' => SearchableInput::locations() + ['placeholder' => 'mission.form.dropoff_placeholder'],
+                'attr' => SearchableInput::locations($this->locationCatalog) + ['placeholder' => 'mission.form.dropoff_placeholder'],
             ])
             ->add('resource', TextType::class, [
                 'label' => 'mission.form.resource',

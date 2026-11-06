@@ -36,8 +36,10 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
   grille). `Mission` : nom optionnel, récompense aUEC, `MissionType`, `pickups` (liste JSON de lieux), collection de
   `Delivery {dropoff, resource, quantity}`. Types = règle de comptage (`MissionType::accepts`) : direct 1→1, livraisons
   multiples 1→N, ramassages multiples N→1 (quantité = total, répartition par lieu inconnue, comme dans le jeu).
-  Lieux et ressources restent des chaînes libres dans `Delivery`. Suggestions : `src/Catalog/LocationCatalog` (système → planète → lieu → lune, groupes Tom Select « Stanton › Hurston » ; lieux de
-  Stanton saisis de mémoire, à fiabiliser) et l'entité `Commodity {name, color}` (40 ressources semées par migration).
+  Lieux et ressources restent des chaînes libres dans `Delivery`. Suggestions : entité `Location {name, ?parent}` (arbre, sans parent = système ;
+  nom unique parmi les frères ; Stanton, Pyro, Nyx semés par migration, à fiabiliser), lue par le service `LocationCatalog`
+  (seules les feuilles sont proposées, groupe Tom Select = 2 premiers niveaux « Stanton › Hurston », le reste en détail ;
+  cache remis à zéro par `ResetInterface` en mode worker) et l'entité `Commodity {name, color}` (40 ressources semées par migration).
   `CommodityColors` / `commodity_color()` donne la couleur, gris `#6c757d` pour une ressource hors base. Affichage :
   `_commodity_badge.html.twig` (fond 15 %, bordure pleine, texte assombri) ; Tom Select : `data-tom-select-badges-value`.
 - **Langues** : anglais par défaut, français ; locale en session (`/locale/{en|fr}`, public, retour au referer du même
@@ -69,7 +71,8 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
 - **Admin** : EasyAdmin sur `/admin` (`ROLE_ADMIN`, `src/Controller/Admin/`) : utilisateurs (rôle admin, nouveau mot de
   passe), tournées en consultation seule (liste + fiche avec toutes ses missions, `templates/admin/tour/missions.html.twig` ;
   suppression possible, ni création ni édition ; pas de CRUD mission), vaisseaux (portes cargo ; ni création ni suppression, ils viennent de
-  l'import), ressources (nom, couleur). Écritures via les méthodes métier (options `getter`/`setter` des champs), aucun
+  l'import), ressources (nom, couleur), lieux (un niveau à la fois : systèmes, puis « Ouvrir » liste les enfants ; niveau
+  porté par le paramètre `parentId` qu'EasyAdmin garde dans ses liens ; supprimer un lieu supprime ses descendants). Écritures via les méthodes métier (options `getter`/`setter` des champs), aucun
   setter générique. Libellés : domaine `admin`. Filtres sur chaque CRUD ; rôles et portes via `JsonContainsFilter` (l'ArrayFilter
   d'EasyAdmin 5.9 plante). Comptes en console : `app:user:create|edit|delete` (questions
   interactives, ou arguments/options avec `-n`) — c'est le seul moyen de créer un admin.

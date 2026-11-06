@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Catalog\LocationCatalog;
 use App\Entity\DoorSide;
 use App\Entity\Ship;
 use App\Form\Data\TourData;
@@ -17,8 +18,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class TourFormType extends AbstractType
 {
-    public function __construct(private readonly ShipRepository $shipRepository)
-    {
+    public function __construct(
+        private readonly ShipRepository $shipRepository,
+        private readonly LocationCatalog $locationCatalog,
+    ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -41,7 +44,7 @@ final class TourFormType extends AbstractType
             ->add('startLocation', TextType::class, [
                 'label' => 'tour.form.start_location',
                 'required' => false,
-                'attr' => SearchableInput::locations() + ['placeholder' => 'form.optional'],
+                'attr' => SearchableInput::locations($this->locationCatalog) + ['placeholder' => 'form.optional'],
             ])
             ->add('doorSides', EnumType::class, [
                 'label' => 'tour.form.door_sides',

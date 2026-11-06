@@ -8,6 +8,7 @@ menu:
     catalog: Catalog
     ships: Ships
     commodities: Commodities
+    locations: Locations
 
 user:
     singular: User
@@ -70,3 +71,16 @@ commodity:
     plural: Commodities
     name: Name
     color: Color
+
+location:
+    system: System
+    systems: Systems
+    singular: Location
+    plural: Locations
+    name: Name
+    children: Sub-locations
+    open: Open
+    add_system: Add a system
+    add: Add a location
+    new_system: New system
+    new_in: 'New location in {parent}'

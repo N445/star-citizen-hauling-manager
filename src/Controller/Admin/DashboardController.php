@@ -38,5 +38,6 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::section('menu.catalog');
         yield MenuItem::linkTo(ShipCrudController::class, 'menu.ships', 'fa fa-rocket');
         yield MenuItem::linkTo(CommodityCrudController::class, 'menu.commodities', 'fa fa-palette');
+        yield MenuItem::linkTo(LocationCrudController::class, 'menu.locations', 'fa fa-location-dot');
     }
 }

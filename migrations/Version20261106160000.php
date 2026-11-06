@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+final class Version20261106160000 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Lieux en base (arbre système → planète → lieu → lune), semés depuis l\'ancien catalogue en dur';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->addSql('CREATE TABLE location (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(120) NOT NULL, parent_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_5E9E89CB727ACA705E237E06 (parent_id, name), INDEX IDX_5E9E89CB727ACA70 (parent_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('ALTER TABLE location ADD CONSTRAINT FK_5E9E89CB727ACA70 FOREIGN KEY (parent_id) REFERENCES location (id) ON DELETE CASCADE');
+        $this->addSql(<<<'SQL'
+            INSERT INTO location (id, name, parent_id) VALUES
+                (1, 'Stanton', NULL),
+                (2, 'Hurston', 1),
+                (3, 'Lorville', 2),
+                (4, 'Everus Harbor', 2),
+                (5, 'HUR-L1 Green Glade Station', 2),
+                (6, 'HUR-L2 Faithful Dream Station', 2),
+                (7, 'HUR-L3 Thundering Express Station', 2),
+                (8, 'HUR-L4 Melodic Fields Station', 2),
+                (9, 'HUR-L5 High Course Station', 2),
+                (10, 'Arial', 2),
+                (11, 'HDMS Bezdek', 10),
+                (12, 'Aberdeen', 2),
+                (13, 'HDMS Anderson', 12),
+                (14, 'Magda', 2),
+                (15, 'HDMS Hahn', 14),
+                (16, 'Crusader', 1),
+                (17, 'Orison', 16),
+                (18, 'Seraphim Station', 16),
+                (19, 'CRU-L1 Ambitious Dream Station', 16),
+                (20, 'CRU-L4 Shallow Fields Station', 16),
+                (21, 'CRU-L5 Beautiful Glen Station', 16),
+                (22, 'Cellin', 16),
+                (23, 'Gallete Family Farms', 22),
+                (24, 'Hickes Research Outpost', 22),
+                (25, 'Daymar', 16),
+                (26, 'Kudre Ore', 25),
+                (27, 'Bountiful Harvest Hydroponics', 25),
+                (28, 'ArcCorp Mining Area 141', 25),
+                (29, 'Yela', 16),
+                (30, 'Benson Mining Outpost', 29),
+                (31, 'Deakins Research Outpost', 29),
+                (32, 'ArcCorp', 1),
+                (33, 'Area 18', 32),
+                (34, 'Baijini Point', 32),
+                (35, 'ARC-L1 Wide Forest Station', 32),
+                (36, 'ARC-L2 Lively Pathway Station', 32),
+                (37, 'ARC-L3 Modern Express Station', 32),
+                (38, 'ARC-L4 Faint Glen Station', 32),
+                (39, 'ARC-L5 Yellow Core Station', 32),
+                (40, 'Lyria', 32),
+                (41, 'Humboldt Mines', 40),
+                (42, 'Shubin Mining SAL-2', 40),
+                (43, 'Shubin Mining SAL-5', 40),
+                (44, 'microTech', 1),
+                (45, 'New Babbage', 44),
+                (46, 'Port Tressler', 44),
+                (47, 'MIC-L1 Shallow Frontier Station', 44),
+                (48, 'MIC-L2 Long Forest Station', 44),
+                (49, 'MIC-L3 Endless Odyssey Station', 44),
+                (50, 'MIC-L4 Red Crossroads Station', 44),
+                (51, 'MIC-L5 Modern Icarus Station', 44),
+                (52, 'Rayari Deltana Research Outpost', 44),
+                (53, 'Calliope', 44),
+                (54, 'Rayari Anvik Research Outpost', 53),
+                (55, 'Euterpe', 44),
+                (56, 'Devlin Scrapyard', 55),
+                (57, 'Gateways', 1),
+                (58, 'Pyro Gateway (Stanton)', 57),
+                (59, 'Nyx Gateway (Stanton)', 57),
+                (60, 'Pyro', NULL),
+                (61, 'Pyro I', 60),
+                (62, 'Gray Gardens Depot', 61),
+                (63, 'Rustville', 61),
+                (64, 'Stag''s Rut', 61),
+                (65, 'Monox', 60),
+                (66, 'Checkmate', 65),
+                (67, 'Arid Reach', 65),
+                (68, 'Jackson''s Swap', 65),
+                (69, 'Last Ditch', 65),
+                (70, 'Ostler''s Claim', 65),
+                (71, 'Slowburn Depot', 65),
+                (72, 'Sunset Mesa', 65),
+                (73, 'Yang''s Place', 65),
+                (74, 'Bloom', 60),
+                (75, 'Orbituary', 74),
+                (76, 'Starlight Service Station', 74),
+                (77, 'Patch City', 74),
+                (78, 'Shepherd''s Rest', 74),
+                (79, 'The Yard', 74),
+                (80, 'Narena''s Rest', 74),
+                (81, 'Shadowfall', 74),
+                (82, 'Bueno Ravine', 74),
+                (83, 'Carver''s Ridge', 74),
+                (84, 'Windfall', 74),
+                (85, 'Prospect Depot', 74),
+                (86, 'Frigid Knot', 74),
+                (87, 'The Golden Riviera', 74),
+                (88, 'Pyro IV', 60),
+                (89, 'Chawla''s Beach', 88),
+                (90, 'Dinger''s Depot', 88),
+                (91, 'Fallow Field', 88),
+                (92, 'Goner''s Deal', 88),
+                (93, 'Sacren''s Plot', 88),
+                (94, 'Pyro V', 60),
+                (95, 'Gaslight', 94),
+                (96, 'Rod''s Fuel ''N Supplies', 94),
+                (97, 'Rat''s Nest', 94),
+                (98, 'Ignis', 94),
+                (99, 'Ashland', 98),
+                (100, 'Kabir''s Post', 98),
+                (101, 'Terminus', 60),
+                (102, 'Ruin Station', 101),
+                (103, 'Endgame', 101),
+                (104, 'Dudley & Daughters', 101),
+                (105, 'Megumi Refueling', 101),
+                (106, 'Blackrock Exchange', 101),
+                (107, 'Bullock''s Reach', 101),
+                (108, 'Canard View', 101),
+                (109, 'Kinder Plots', 101),
+                (110, 'Last Landings', 101),
+                (111, 'Rough Landing', 101),
+                (112, 'Scarper''s Turn', 101),
+                (113, 'Stonetree', 101),
+                (114, 'Supply Gap', 101),
+                (115, 'Watcher''s Depot', 101),
+                (116, 'Gateways', 60),
+                (117, 'Stanton Gateway (Pyro)', 116),
+                (118, 'Nyx Gateway (Pyro)', 116),
+                (119, 'Nyx', NULL),
+                (120, 'Glaciem Ring', 119),
+                (121, 'Delamar', 120),
+                (122, 'Levski', 121),
+                (123, 'Keeger Belt', 119),
+                (124, 'People''s Service Station Alpha', 123),
+                (125, 'People''s Service Station Delta', 123),
+                (126, 'People''s Service Station Lambda', 123),
+                (127, 'People''s Service Station Theta', 123),
+                (128, 'Gateways', 119),
+                (129, 'Stanton Gateway (Nyx)', 128),
+                (130, 'Pyro Gateway (Nyx)', 128)
+            SQL);
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql('DROP TABLE location');
+    }
+}

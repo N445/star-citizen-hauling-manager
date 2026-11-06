@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Catalog\LocationCatalog;
 use App\Entity\MissionType;
 use App\Form\Data\MissionData;
 use Symfony\Component\Form\AbstractType;
@@ -18,6 +19,10 @@ use Symfony\UX\LiveComponent\Form\Type\LiveCollectionType;
 final class MissionFormType extends AbstractType
 {
     private const string SEPARATOR = ',';
+
+    public function __construct(private readonly LocationCatalog $locationCatalog)
+    {
+    }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -40,7 +45,7 @@ final class MissionFormType extends AbstractType
             ])
             ->add('pickups', TextType::class, [
                 'label' => 'mission.form.pickups',
-                'attr' => SearchableInput::locations(multiple: true),
+                'attr' => SearchableInput::locations($this->locationCatalog, multiple: true),
             ])
             ->add('deliveries', LiveCollectionType::class, [
                 'label' => false,

@@ -8,6 +8,7 @@ menu:
     catalog: Catalogue
     ships: Vaisseaux
     commodities: Ressources
+    locations: Lieux
 
 user:
     singular: Utilisateur
@@ -70,3 +71,16 @@ commodity:
     plural: Ressources
     name: Nom
     color: Couleur
+
+location:
+    system: Système
+    systems: Systèmes
+    singular: Lieu
+    plural: Lieux
+    name: Nom
+    children: Sous-lieux
+    open: Ouvrir
+    add_system: Ajouter un système
+    add: Ajouter un lieu
+    new_system: Nouveau système
+    new_in: 'Nouveau lieu dans {parent}'
