@@ -39,6 +39,12 @@ tour:
         empty: No tours yet.
         empty_hint: A tour groups the missions you accept and plans the pickups and drops for your ship.
         summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
+    summary:
+        edit: 'Edit tour'
+        capacity: 'Capacity'
+        doors: 'Cargo doors'
+        no_start: 'Not set'
+        off_catalogue: 'Not in the catalogue: no cargo grid.'
     form:
         name: Tour name
         ship: Ship

@@ -20,6 +20,8 @@ export default class extends Controller {
             createOnBlur: true,
             persist: false,
             delimiter: DELIMITER,
+            // Hors de la carte : sinon les cartes animées et le panneau collant de la soute passent par-dessus la liste.
+            dropdownParent: 'body',
             onChange: (value) => this.changed(value),
             onItemAdd: () => this.clearSearch(),
             render: this.badgesValue ? this.badgeRenderers() : this.plainRenderers(),

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% import '_icons.html.twig' as icons %}
 
 {% block title %}{{ tour ? tour.name : 'tour.new'|trans }} — {{ parent() }}{% endblock %}
 
@@ -7,35 +8,71 @@
 {% block body %}
     <div class="row g-4 tour-page">
         <section class="col-lg-3">
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span class="d-flex align-items-center gap-2">
+            {% set editing = not tour or tourForm.vars.submitted %}
+            <div class="card mb-3 tour-card" data-controller="tour-card" data-tour-card-editing-value="{{ editing ? 'true' : 'false' }}">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                    <span class="d-flex align-items-center gap-2 min-w-0">
                         <span class="step-badge {{ tour ? 'step-badge--done' }}" aria-hidden="true">1</span>
-                        <span>{{ (tour ? 'tour.card.title' : 'tour.new')|trans }}</span>
+                        <span class="text-truncate">{{ (tour ? 'tour.card.title' : 'tour.new')|trans }}</span>
                     </span>
                     {% if tour %}
-                        <a class="btn btn-sm btn-outline-primary" href="{{ path('tour_new') }}"
-                           {% if not app.user %}title="{{ 'tour.guest.replace_hint'|trans }}"{% endif %}>{{ 'tour.new'|trans }}</a>
+                        <span class="d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary tour-card__edit" data-tour-card-target="editButton" data-action="tour-card#edit"
+                                    title="{{ 'tour.summary.edit'|trans }}" aria-label="{{ 'tour.summary.edit'|trans }}"{% if editing %} hidden{% endif %}>{{ icons.icon('pencil') }}</button>
+                            <a class="btn btn-sm btn-outline-primary" href="{{ path('tour_new') }}"
+                               {% if not app.user %}title="{{ 'tour.guest.replace_hint'|trans }}"{% endif %}>{{ 'tour.new'|trans }}</a>
+                        </span>
                     {% endif %}
                 </div>
                 {% if not app.user %}
                     <div class="small text-body-secondary px-3 pt-2">{{ (tour ? 'tour.guest.replace_hint' : 'tour.guest.account_hint')|trans }}</div>
                 {% endif %}
                 <div class="card-body">
-                    {% if not tour %}
-                        <p class="tour-start-hint">{{ 'tour.start_hint'|trans }}</p>
-                    {% endif %}
-                    {{ form_start(tourForm, {attr: {novalidate: 'novalidate'}}) }}
-                        {{ form_errors(tourForm) }}
-                        {{ form_row(tourForm.name) }}
-                        <div data-controller="ship-capacity">
-                            {{ form_row(tourForm.shipName) }}
-                            {{ form_row(tourForm.capacity) }}
+                    {% if tour %}
+                        <div class="tour-summary" data-tour-card-target="summary"{% if editing %} hidden{% endif %}>
+                            <h2 class="tour-summary__name">{{ tour.name }}</h2>
+                            <dl class="tour-summary__list">
+                                <dt>{{ 'tour.form.ship'|trans }}</dt>
+                                <dd>
+                                    {{ tour.shipName }}
+                                    {% if tour.ship %}<span class="text-body-secondary">· {{ tour.ship.manufacturer }}</span>{% else %}<div class="small text-body-secondary">{{ 'tour.summary.off_catalogue'|trans }}</div>{% endif %}
+                                </dd>
+                                <dt>{{ 'tour.summary.capacity'|trans }}</dt>
+                                <dd><strong>{{ tour.capacity }}</strong> SCU</dd>
+                                <dt>{{ 'tour.form.start_location'|trans }}</dt>
+                                <dd>{{ tour.startLocation ?: 'tour.summary.no_start'|trans }}</dd>
+                                {% if tour.ship %}
+                                    <dt>{{ 'tour.summary.doors'|trans }}</dt>
+                                    <dd class="d-flex flex-wrap gap-1">
+                                        {% for door in tour.ship.doorSides %}
+                                            <span class="badge tour-summary__door">{{ door.label|trans }}</span>
+                                        {% endfor %}
+                                    </dd>
+                                {% endif %}
+                            </dl>
                         </div>
-                        {{ form_row(tourForm.startLocation) }}
-                        {{ form_row(tourForm.doorSides) }}
-                        <button class="btn btn-primary w-100">{{ (tour ? 'tour.form.save' : 'tour.form.create')|trans }}</button>
-                    {{ form_end(tourForm) }}
+                    {% endif %}
+                    <div data-tour-card-target="form"{% if not editing %} hidden{% endif %}>
+                        {% if not tour %}
+                            <p class="tour-start-hint">{{ 'tour.start_hint'|trans }}</p>
+                        {% endif %}
+                        {{ form_start(tourForm, {attr: {novalidate: 'novalidate', 'data-action': 'change->tour-card#dirty input->tour-card#dirty'}}) }}
+                            {{ form_errors(tourForm) }}
+                            {{ form_row(tourForm.name) }}
+                            <div data-controller="ship-capacity door-sides">
+                                {{ form_row(tourForm.shipName) }}
+                                {{ form_row(tourForm.capacity) }}
+                                {{ form_row(tourForm.doorSides) }}
+                            </div>
+                            {{ form_row(tourForm.startLocation) }}
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary flex-grow-1">{{ (tour ? 'tour.form.save' : 'tour.form.create')|trans }}</button>
+                                {% if tour %}
+                                    <button type="button" class="btn btn-outline-secondary" data-action="tour-card#cancel">{{ 'action.cancel'|trans }}</button>
+                                {% endif %}
+                            </div>
+                        {{ form_end(tourForm) }}
+                    </div>
                 </div>
             </div>
 
@@ -49,7 +86,7 @@
                  data-controller="cargo-grid"
                  data-cargo-grid-groups-value="{{ (ship ? ship.cargoGroups : [])|json_encode }}"
                  data-cargo-grid-labels-value="{{ {canvas: 'cargo.canvas_label'|trans, onBoard: 'cargo.legend.onBoard'|trans, toLoad: 'cargo.legend.toLoad'|trans, toUnload: 'cargo.legend.toUnload'|trans, stacked: 'cargo.tooltip.stacked'|trans}|json_encode }}"
-                 data-action="tom-select:change@window->cargo-grid#show cargo:plan@window->cargo-grid#plan cargo:highlight@window->cargo-grid#highlight">
+                 data-action="tom-select:change@window->cargo-grid#show cargo:plan@window->cargo-grid#plan cargo:highlight@window->cargo-grid#highlight cargo:doors@window->cargo-grid#doors">
                 <div class="card-header d-flex justify-content-between align-items-center gap-2">
                     <span>{{ 'cargo.title'|trans }} <small class="text-body-secondary">— {{ 'cargo.scale'|trans }}</small></span>
                     <ul class="cargo-legend" data-cargo-grid-target="legend" aria-label="{{ 'cargo.legend.aria'|trans }}"{% if not ship or ship.cargoGroups is empty %} hidden{% endif %}>

@@ -30,7 +30,7 @@ final class TourFormType extends AbstractType
             ->add('shipName', TextType::class, [
                 'label' => 'tour.form.ship',
                 'attr' => SearchableInput::attributes($this->shipSuggestions()) + [
-                    'data-action' => 'tom-select:change->ship-capacity#fill',
+                    'data-action' => 'tom-select:change->ship-capacity#fill tom-select:change->door-sides#fill',
                     'data-ship-name' => '',
                 ],
             ])
@@ -50,6 +50,7 @@ final class TourFormType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
                 'label_attr' => ['class' => 'checkbox-inline'],
+                'choice_attr' => static fn (): array => ['data-door-sides-target' => 'input', 'data-action' => 'door-sides#emit'],
                 'help' => 'tour.form.door_sides_help',
             ]);
     }
@@ -60,7 +61,7 @@ final class TourFormType extends AbstractType
     }
 
     /**
-     * @return list<array{value: string, text: string, capacity: int, cargoGroups: list<array<string, mixed>>}>
+     * @return list<array{value: string, text: string, capacity: int, cargoGroups: list<array<string, mixed>>, doorSides: list<string>}>
      */
     private function shipSuggestions(): array
     {
@@ -70,6 +71,7 @@ final class TourFormType extends AbstractType
                 'text' => $ship->name(),
                 'capacity' => $ship->capacity(),
                 'cargoGroups' => $ship->cargoGroups(),
+                'doorSides' => array_map(static fn (DoorSide $side): string => $side->value, $ship->doorSides()),
             ],
             $this->shipRepository->findAllSorted(),
         );

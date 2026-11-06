@@ -39,6 +39,12 @@ tour:
         empty: Aucune tournée pour l'instant.
         empty_hint: Une tournée regroupe les missions acceptées et planifie les ramassages et livraisons pour ton vaisseau.
         summary: '{count, plural, one {# mission} other {# missions}} · {reward, number, integer} aUEC'
+    summary:
+        edit: 'Modifier la tournée'
+        capacity: 'Capacité'
+        doors: 'Portes cargo'
+        no_start: 'Non défini'
+        off_catalogue: 'Hors catalogue : pas de grille cargo.'
     form:
         name: Nom de la tournée
         ship: Vaisseau

@@ -519,3 +519,45 @@
         transform: none;
     }
 }
+
+.tour-page .tour-card__pane--enter {
+    animation: tp-enter var(--hm-duration-normal, 200ms) var(--hm-ease, ease-out);
+}
+
+.tour-page .tour-summary__name {
+    margin-bottom: 0.75rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.tour-page .tour-summary__list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 0.75rem;
+    margin: 0;
+}
+
+.tour-page .tour-summary__list dt {
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.tour-page .tour-summary__list dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.tour-page .tour-summary__door {
+    border: 1px solid var(--hm-drop, #e8890c);
+    background: color-mix(in srgb, var(--hm-drop, #e8890c) 14%, transparent);
+    color: var(--bs-body-color);
+    font-weight: 500;
+}
+
+.tour-page .tour-card__edit {
+    line-height: 1;
+}

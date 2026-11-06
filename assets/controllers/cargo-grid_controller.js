@@ -120,6 +120,7 @@ export default class extends Controller {
 
         this.applyTheme(false);
         this.readInitialPlan();
+        this.readFormDoors();
         this.useGroups(this.groupsValue);
     }
 
@@ -171,6 +172,22 @@ export default class extends Controller {
 
     resetView() {
         this.frame(true);
+    }
+
+    // Les portes cochées dans le formulaire priment sur celles du plan : elles s'affichent avant l'enregistrement.
+    doors({ detail: { doors } }) {
+        if (JSON.stringify(doors) === JSON.stringify(this.formDoors)) {
+            return;
+        }
+
+        this.formDoors = doors;
+        this.addDoors(true);
+        this.draw();
+    }
+
+    readFormDoors() {
+        const inputs = [...document.querySelectorAll('[data-door-sides-target="input"]')];
+        this.formDoors = inputs.length ? inputs.filter((input) => input.checked).map((input) => input.value) : null;
     }
 
     readInitialPlan() {
@@ -228,7 +245,7 @@ export default class extends Controller {
         });
     }
 
-    addDoors() {
+    addDoors(animate = false) {
         this.floorGroup.children.filter((child) => child.userData.door).forEach((arrow) => {
             this.dispose(arrow);
             arrow.removeFromParent();
@@ -240,12 +257,24 @@ export default class extends Controller {
 
         const bounds = this.gridBounds();
         const center = bounds.getCenter(new THREE.Vector3());
-        (this.cargoPlan.doors?.length ? this.cargoPlan.doors : ['rear']).forEach((door) => {
+        const shown = new Set(this.doorsShown ?? []);
+        const doors = this.formDoors ?? (this.cargoPlan.doors?.length ? this.cargoPlan.doors : ['rear']);
+        this.doorsShown = doors;
+        doors.forEach((door) => {
             const { shape, at } = (doorArrows[door] ?? doorArrows.rear)(bounds, center);
-            const arrow = new THREE.Mesh(shape(doubleArrow()), new THREE.MeshBasicMaterial({ color: DOOR_COLOR, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
+            const material = new THREE.MeshBasicMaterial({ color: DOOR_COLOR, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+            const arrow = new THREE.Mesh(shape(doubleArrow()), material);
             arrow.position.set(...at);
             arrow.userData.door = true;
             this.floorGroup.add(arrow);
+
+            if (animate && !shown.has(door)) {
+                material.opacity = 0;
+                this.tween(DURATION.appear, (k) => {
+                    material.opacity = 0.9 * k;
+                    arrow.scale.setScalar(0.6 + 0.4 * k);
+                });
+            }
         });
     }
 

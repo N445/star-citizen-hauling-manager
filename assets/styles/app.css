@@ -477,6 +477,7 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
 }
 
 .ts-dropdown {
+    z-index: 1030;
     border-color: var(--hm-border);
     border-radius: var(--hm-radius-sm);
     background: var(--hm-surface-raised);
@@ -716,6 +717,21 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Sans ça, une valeur longue (et le champ de saisie ajouté au focus) élargit la colonne et fait passer ses voisins à la ligne. */
+.row > :has(.ts-wrapper),
+.ts-wrapper,
+.ts-wrapper .ts-control {
+    min-width: 0;
+}
+
+.ts-wrapper.single.input-active .ts-control > input {
+    min-width: 2rem;
+}
+
+.ts-wrapper.multi .ts-control > input {
+    min-width: 4rem !important;
 }
 
 .route-stop {
