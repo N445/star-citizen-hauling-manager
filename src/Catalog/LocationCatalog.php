@@ -62,7 +62,7 @@ final class LocationCatalog
                 'Devlin Scrapyard' => 'Euterpe',
             ],
             'Gateways' => [
-                'Pyro Gateway' => null,
+                'Pyro Gateway (Stanton)' => null,
                 'Nyx Gateway (Stanton)' => null,
             ],
         ],
@@ -128,8 +128,23 @@ final class LocationCatalog
                 'Watcher\'s Depot' => null,
             ],
             'Gateways' => [
-                'Stanton Gateway' => null,
+                'Stanton Gateway (Pyro)' => null,
                 'Nyx Gateway (Pyro)' => null,
+            ],
+        ],
+        'Nyx' => [
+            'Glaciem Ring' => [
+                'Levski' => 'Delamar',
+            ],
+            'Keeger Belt' => [
+                'People\'s Service Station Alpha' => null,
+                'People\'s Service Station Delta' => null,
+                'People\'s Service Station Lambda' => null,
+                'People\'s Service Station Theta' => null,
+            ],
+            'Gateways' => [
+                'Stanton Gateway (Nyx)' => null,
+                'Pyro Gateway (Nyx)' => null,
             ],
         ],
     ];
