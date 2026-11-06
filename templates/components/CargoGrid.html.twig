@@ -1,0 +1,32 @@
+{% set g = ship.grid %}
+<div class="cargo" {{ attributes }} data-controller="cargo-dnd" data-cargo-dnd-layer-value="{{ layer }}" data-cargo-dnd-height-value="{{ g.height }}">
+    <div class="cargo-toolbar">
+        {% if this.layers|length > 1 %}
+            <span class="muted">Couche</span>
+            {% for z in this.layers %}
+                <button type="button" class="small" style="{{ z == layer ? 'border-color:var(--accent);color:var(--accent)' }}" data-action="live#action" data-live-action-param="selectLayer" data-live-layer-param="{{ z }}">{{ z + 1 }}</button>
+            {% endfor %}
+        {% endif %}
+        <span class="legend">
+            <span><i class="swatch pickup"></i>Pickup</span>
+            <span><i class="swatch drop"></i>Drop</span>
+        </span>
+    </div>
+    {% if this.doorSide == 'top' %}<div class="door">PORTE</div>{% endif %}
+    <div style="display:flex;align-items:stretch;gap:4px">
+        {% if this.doorSide == 'left' %}<div class="door" style="writing-mode:vertical-rl">PORTE</div>{% endif %}
+        <div class="cargo-scroll" style="flex:1">
+            <div class="cargo-grid" data-cargo-dnd-target="grid" data-cols="{{ g.width }}" data-rows="{{ g.length }}" style="--cols: {{ g.width }}; --rows: {{ g.length }}; --cell: {{ this.cellSize }}px">
+                {% for b in this.blocks %}
+                    <div class="cargo-block" data-block="{{ b.index }}" style="grid-column: {{ b.col }} / span {{ b.cols }}; grid-row: {{ b.row }} / span {{ b.rows }}">{% if b.max %}<span class="max">max {{ b.max }}</span>{% endif %}</div>
+                {% endfor %}
+                {% for c in this.cells %}
+                    <div class="crate {{ c.state }}{{ c.pinned ? ' pinned' }}" data-crate="{{ c.id }}" data-state="{{ c.state }}" data-x="{{ c.x }}" data-y="{{ c.y }}" data-z="{{ c.z }}" data-o="{{ c.o }}" data-w="{{ c.cols }}" data-l="{{ c.rows }}" data-h="{{ c.height }}" title="{{ c.mission }} · {{ c.size }} SCU"
+                         style="--c: {{ c.color }}; grid-column: {{ c.col }} / span {{ c.cols }}; grid-row: {{ c.row }} / span {{ c.rows }}">{{ c.size }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% if this.doorSide == 'right' %}<div class="door" style="writing-mode:vertical-rl">PORTE</div>{% endif %}
+    </div>
+    {% if this.doorSide == 'bottom' %}<div class="door">PORTE</div>{% endif %}
+</div>
