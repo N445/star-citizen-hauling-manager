@@ -17,14 +17,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\EntityCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Arbre des lieux, un niveau à la fois : d'abord les systèmes (lieux sans parent), puis les enfants du lieu ouvert.
- * Le niveau affiché suit le paramètre d'URL `parentId`, qu'EasyAdmin conserve dans ses liens et redirections.
+ * Arbre des lieux affiché en entier, dans l'ordre de l'arbre (systèmes, puis leurs enfants indentés).
+ * Le paramètre d'URL `parentId` ne sert qu'à créer un lieu directement sous un autre (action « Ajouter un sous-lieu »).
  *
  * @extends AbstractCrudController<Location>
  */
@@ -55,9 +58,10 @@ final class LocationCrudController extends AbstractCrudController
         $parent = $this->currentParent();
 
         return $crud
-            ->setEntityLabelInSingular(null === $parent ? 'location.system' : 'location.singular')
-            ->setEntityLabelInPlural(null === $parent ? 'location.systems' : 'location.plural')
-            ->setPageTitle(Crud::PAGE_INDEX, null === $parent ? 'location.systems' : (string) $parent)
+            ->setEntityLabelInSingular('location.singular')
+            ->setEntityLabelInPlural('location.plural')
+            ->setPageTitle(Crud::PAGE_INDEX, 'location.plural')
+            ->setPaginatorPageSize(500)
             ->setPageTitle(Crud::PAGE_NEW, null === $parent ? 'location.new_system' : $this->translator->trans('location.new_in', ['parent' => (string) $parent], 'admin'))
             ->setPageTitle(Crud::PAGE_EDIT, static fn (Location $location): string => (string) $location)
             ->setSearchFields(['name'])
@@ -69,37 +73,61 @@ final class LocationCrudController extends AbstractCrudController
     {
         $actions
             ->disable(Action::DETAIL)
-            ->add(Crud::PAGE_INDEX, Action::new('open', 'location.open', 'fa fa-folder-open')
-                ->linkToUrl(fn (Location $location): string => $this->levelUrl($location->id())))
-            ->reorder(Crud::PAGE_INDEX, ['open', Action::EDIT, Action::DELETE])
-            ->update(Crud::PAGE_INDEX, Action::NEW, fn (Action $action): Action => $action->setLabel(
-                null === $this->currentParent() ? 'location.add_system' : 'location.add',
-            ));
-
-        $parent = $this->currentParent();
-
-        if (null !== $parent) {
-            $actions->add(Crud::PAGE_INDEX, Action::new('up', $parent->parent()?->name() ?? 'location.systems', 'fa fa-arrow-up')
-                ->linkToUrl($this->levelUrl($parent->parent()?->id()))
-                ->createAsGlobalAction());
-        }
+            ->add(Crud::PAGE_INDEX, Action::new('addChild', 'location.add_child', 'fa fa-plus')
+                ->linkToUrl(fn (Location $location): string => $this->adminUrlGenerator
+                    ->setController(self::class)
+                    ->setAction(Action::NEW)
+                    ->unset(EA::ENTITY_ID)
+                    ->set(self::PARENT, $location->id())
+                    ->generateUrl()))
+            ->reorder(Crud::PAGE_INDEX, ['addChild', Action::EDIT, Action::DELETE])
+            ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('location.add_system'));
 
         return $actions;
     }
 
     public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
     {
-        $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
-        $parent = $this->currentParent();
+        return parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+    }
 
-        return null === $parent
-            ? $queryBuilder->andWhere('entity.parent IS NULL')
-            : $queryBuilder->andWhere('entity.parent = :parent')->setParameter('parent', $parent);
+    /**
+     * Remet les lignes dans l'ordre de l'arbre (le SQL ne sait pas trier par chemin) ; tout tient sur une page.
+     */
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        if (Crud::PAGE_INDEX !== $responseParameters->get('pageName')) {
+            return $responseParameters;
+        }
+
+        $rows = iterator_to_array($responseParameters->get('entities'), false);
+        $names = static fn (EntityDto $row): array => array_map(static fn (Location $location): string => $location->name(), $row->getInstance()->path());
+        usort($rows, static function (EntityDto $a, EntityDto $b) use ($names): int {
+            foreach (array_map(null, $names($a), $names($b)) as [$left, $right]) {
+                if ($left !== $right) {
+                    return null === $left ? -1 : (null === $right ? 1 : strnatcasecmp($left, $right));
+                }
+            }
+
+            return 0;
+        });
+
+        $responseParameters->set('entities', new EntityCollection(array_combine(
+            array_map(static fn (EntityDto $row): string => $row->getPrimaryKeyValueAsString(), $rows),
+            $rows,
+        )));
+
+        return $responseParameters;
     }
 
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('name', 'location.name')->setFormTypeOptions([
+        yield Field::new('tree', 'location.name')
+            ->setVirtual(true)
+            ->onlyOnIndex()
+            ->setSortable(false)
+            ->setTemplatePath('admin/location/_name.html.twig');
+        yield TextField::new('name', 'location.name')->onlyOnForms()->setFormTypeOptions([
             'getter' => static fn (Location $location): string => $location->name(),
             'setter' => static fn (Location $location, ?string $name) => $location->rename((string) $name),
             'constraints' => [new Assert\NotBlank(), new Assert\Length(max: 120)],
@@ -112,19 +140,5 @@ final class LocationCrudController extends AbstractCrudController
         $id = $this->requestStack->getCurrentRequest()?->query->getInt(self::PARENT);
 
         return $id > 0 ? $this->locationRepository->find($id) : null;
-    }
-
-    private function levelUrl(?int $parentId): string
-    {
-        return $this->adminUrlGenerator
-            ->setController(self::class)
-            ->setAction(Action::INDEX)
-            ->unset(EA::ENTITY_ID)
-            ->unset(EA::PAGE)
-            ->unset(EA::QUERY)
-            ->unset(EA::FILTERS)
-            ->unset(EA::SORT)
-            ->set(self::PARENT, $parentId)
-            ->generateUrl();
     }
 }

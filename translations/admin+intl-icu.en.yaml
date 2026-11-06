@@ -82,6 +82,7 @@ location:
     children: Sub-locations
     open: Open
     add_system: Add a system
+    add_child: Add a sub-location
     add: Add a location
     new_system: New system
     new_in: 'New location in {parent}'

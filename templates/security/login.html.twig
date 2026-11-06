@@ -26,6 +26,12 @@
                         <label class="form-label" for="password">{{ 'login.password'|trans }}</label>
                         <input class="form-control" type="password" id="password" name="_password" autocomplete="current-password" required>
                     </div>
+                    {% if turnstile_site_key %}
+                        <div class="mb-3">
+                            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="auto" data-response-field-name="cf-turnstile-response"></div>
+                            {{ include('form/_turnstile_script.html.twig') }}
+                        </div>
+                    {% endif %}
                     <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
                     <button class="btn btn-primary w-100" type="submit" data-track="login-submit">{{ 'login.submit'|trans }}</button>
                 </form>

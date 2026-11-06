@@ -33,7 +33,8 @@ final class RegistrationFormType extends AbstractType
                     'label' => 'registration.form.password_confirmation',
                     'attr' => ['autocomplete' => 'new-password'],
                 ],
-            ]);
+            ])
+            ->add('turnstile', TurnstileType::class);
 
         $builder->get('email')->addModelTransformer(EmailNormalizer::transformer());
     }

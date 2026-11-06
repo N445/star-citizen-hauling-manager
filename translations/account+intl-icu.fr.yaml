@@ -38,6 +38,9 @@ registration:
         too_long: Le mot de passe est trop long.
         mismatch: Les deux mots de passe ne correspondent pas.
 
+turnstile:
+    failed: La vérification a échoué, réessaie.
+
 flash:
     registered: Bienvenue ! Ton compte est prêt.
 

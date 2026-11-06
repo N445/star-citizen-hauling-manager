@@ -38,6 +38,9 @@ registration:
         too_long: The password is too long.
         mismatch: The two passwords do not match.
 
+turnstile:
+    failed: Verification failed, please try again.
+
 flash:
     registered: Welcome! Your account is ready.
 

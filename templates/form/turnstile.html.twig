@@ -1,0 +1,13 @@
+{% block turnstile_row %}
+    {% if site_key %}
+        <div class="mb-3">
+            {{ form_widget(form) }}
+            {{ form_errors(form) }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block turnstile_widget %}
+    <div class="cf-turnstile" data-sitekey="{{ site_key }}" data-theme="auto" data-response-field-name="{{ full_name }}"></div>
+    {{ include('form/_turnstile_script.html.twig') }}
+{% endblock %}

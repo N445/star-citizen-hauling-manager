@@ -1,8 +1,9 @@
 twig:
     file_name_pattern: '*.twig'
-    form_themes: ['bootstrap_5_layout.html.twig']
+    form_themes: ['bootstrap_5_layout.html.twig', 'form/turnstile.html.twig']
     globals:
         umami_website_id: '%env(UMAMI_WEBSITE_ID)%'
+        turnstile_site_key: '%env(TURNSTILE_SITE_KEY)%'
 
 when@test:
     twig:
