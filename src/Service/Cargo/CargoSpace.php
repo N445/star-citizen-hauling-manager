@@ -54,6 +54,74 @@ final readonly class CargoSpace
     }
 
     /**
+     * Marque comme occupée la place d'une caisse déjà posée, sans rien vérifier.
+     *
+     * @param array{x: float, y: float, z: float, width: int, height: int, length: int} $placement
+     */
+    public function block(array $placement): void
+    {
+        $spot = $this->spotInsideAGrid($placement);
+
+        if (null !== $spot) {
+            $spot->bay->occupy($spot);
+        }
+    }
+
+    /**
+     * La place d'une caisse posée à la main : dimensions du jeu (éventuellement tournée), dans une grille, taille admise par
+     * cette grille, libre et soutenue par le sol ou par des caisses sur toute sa surface.
+     *
+     * @param array{x: float, y: float, z: float, width: int, height: int, length: int} $placement
+     *
+     * @throws PlacementException
+     */
+    public function spotFor(array $placement, int $size): Spot
+    {
+        $dimensions = CrateSize::dimensions($size);
+        $straight = $placement['width'] === $dimensions['width'] && $placement['length'] === $dimensions['length'];
+        $turned = $placement['width'] === $dimensions['length'] && $placement['length'] === $dimensions['width'];
+
+        if ($placement['height'] !== $dimensions['height'] || !($straight || $turned)) {
+            throw new PlacementException('cargo.edit.error.shape');
+        }
+
+        $spot = $this->spotInsideAGrid($placement) ?? throw new PlacementException('cargo.edit.error.outside');
+
+        return match (true) {
+            !$spot->bay->accepts($size) => throw new PlacementException('cargo.edit.error.size'),
+            !$spot->bay->isFree($spot) => throw new PlacementException('cargo.edit.error.overlap'),
+            !$spot->bay->isSupported($spot) => throw new PlacementException('cargo.edit.error.unsupported'),
+            default => $spot,
+        };
+    }
+
+    /**
+     * @param array{x: float, y: float, z: float, width: int, height: int, length: int} $placement
+     */
+    public function isSupported(array $placement): bool
+    {
+        $spot = $this->spotInsideAGrid($placement);
+
+        return null === $spot || $spot->bay->isSupported($spot);
+    }
+
+    /**
+     * @param array{x: float, y: float, z: float, width: int, height: int, length: int} $placement
+     */
+    private function spotInsideAGrid(array $placement): ?Spot
+    {
+        foreach ($this->bays as $bay) {
+            $spot = $bay->spotAt($placement['x'], $placement['y'], $placement['z'], $placement['width'], $placement['height'], $placement['length']);
+
+            if (null !== $spot) {
+                return $spot;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Priorités : ne pas être posée sur une caisse livrée avant, ne pas lui couper l'accès depuis toutes les portes,
      * rester près des caisses de même destination (sinon viser la profondeur : 0 = porte, 1 = fond), être le plus bas.
      *

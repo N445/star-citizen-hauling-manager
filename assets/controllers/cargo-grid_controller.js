@@ -1,6 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { getComponent } from '@symfony/ux-live-component';
+import { layoutProblem, restProblem, snap, nearestGrid, restHeight } from '../cargo-rules.js';
+import { track } from '../stats.js';
 
 const PALETTES = {
     light: { floor: '#8a9097', floorOpacity: 0.14, line: '#a3a9b0', lineOpacity: 0.6, outline: '#5c636a', contrast: '#111418', edgeShade: 0.55 },
@@ -12,8 +15,13 @@ const ARROW_LENGTH = 3;
 const ARROW_GAP = 0.4;
 const CRATE_GAP = 0.08;
 const DROP_HEIGHT = 1.5;
-const DURATION = { appear: 420, leave: 380, dim: 160, camera: 650, pulse: 2400 };
+const DURATION = { appear: 420, leave: 380, dim: 160, camera: 650, pulse: 2400, blink: 1500 };
 const PULSES = 3;
+const SELECT_COLOR = '#4dabf7';
+const DRAG_THRESHOLD = 5;
+const NOTICE_DURATION = 5000;
+const HALO = 0.16;
+const NUDGES = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 const range = (count) => Array.from({ length: count + 1 }, (_, index) => index);
 const point = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -53,6 +61,45 @@ const doorArrows = {
 };
 
 const crateId = (crate) => [crate.key, crate.x, crate.y, crate.z, crate.width, crate.height, crate.length].join('|');
+const boxOf = (crate) => ({ x: crate.x, y: crate.y, z: crate.z, width: crate.width, height: crate.height, length: crate.length, size: crate.size });
+const sameBox = (a, b) => ['x', 'y', 'z', 'width', 'length'].every((key) => a[key] === b[key]);
+// Coche « bien posée » dessinée une fois pour toutes sur un canvas, posée à plat sur le dessus de la caisse.
+let checkMap = null;
+const checkTexture = () => {
+    if (checkMap) {
+        return checkMap;
+    }
+
+    const canvas = Object.assign(document.createElement('canvas'), { width: 128, height: 128 });
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'rgba(20, 24, 28, 0.82)';
+    context.beginPath();
+    context.arc(64, 64, 58, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = 12;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.beginPath();
+    context.moveTo(36, 66);
+    context.lineTo(56, 87);
+    context.lineTo(93, 44);
+    context.stroke();
+    checkMap = new THREE.CanvasTexture(canvas);
+    checkMap.colorSpace = THREE.SRGBColorSpace;
+
+    return checkMap;
+};
+
+const placeCheck = (mesh) => {
+    const { crate, check } = mesh.userData;
+    const side = Math.min(crate.width, crate.length) * 0.6;
+    check.scale.set(side, 1, side);
+    check.position.y = crate.height / 2 + 0.03;
+};
+
+// Halo : coque un peu plus grande vue de l'intérieur ; il entoure la caisse sans toucher à ses bordures (couleur de la ressource).
+const haloGeometry = (crate) => new THREE.BoxGeometry(crate.width + HALO * 2, crate.height + HALO * 2, crate.length + HALO * 2);
 const crateStatus = (crate) => (crate.unloading ? 'toUnload' : crate.phantom ? 'toLoad' : 'onBoard');
 const crateVolume = (crate) => crate.size ?? crate.width * crate.height * crate.length;
 
@@ -69,7 +116,7 @@ const cssColor = (value, fallback) => {
 };
 
 export default class extends Controller {
-    static targets = ['canvas', 'empty', 'stage', 'tooltip', 'legend', 'count', 'reset'];
+    static targets = ['canvas', 'empty', 'stage', 'tooltip', 'legend', 'count', 'reset', 'notice', 'rotate', 'undo', 'resetMission', 'resetAll', 'lock', 'actions', 'placed', 'placedCount'];
     static values = { groups: Array, labels: Object };
 
     connect() {
@@ -84,6 +131,14 @@ export default class extends Controller {
         this.tweens = new Set();
         this.frameId = null;
         this.size = { width: 0, height: 0 };
+        this.selected = null;
+        this.press = null;
+        this.drag = null;
+        this.ghost = null;
+        this.swapTarget = null;
+        this.undoStack = [];
+        this.locked = false;
+        this.blink = 0;
 
         this.scene = new THREE.Scene();
         this.floorGroup = new THREE.Group();
@@ -126,6 +181,12 @@ export default class extends Controller {
         this.resizeObserver.observe(this.canvasTarget);
         window.addEventListener('resize', this.onViewportChange);
         this.coarse.addEventListener('change', () => this.applyTouchMode());
+        this.onKey = (event) => this.keyDown(event);
+        this.element.addEventListener('keydown', this.onKey);
+        this.onPress = (event) => this.pressAt(event);
+        this.onDragMove = (event) => this.dragTo(event);
+        this.onDragEnd = (event) => this.release(event);
+        this.canvasTarget.addEventListener('pointerdown', this.onPress, { capture: true });
 
         this.applyTheme(false);
         this.readInitialPlan();
@@ -141,6 +202,10 @@ export default class extends Controller {
         this.themeObserver.disconnect();
         this.resizeObserver.disconnect();
         window.removeEventListener('resize', this.onViewportChange);
+        this.canvasTarget.removeEventListener('pointerdown', this.onPress, { capture: true });
+        this.element.removeEventListener('keydown', this.onKey);
+        this.stopPress();
+        clearTimeout(this.noticeTimer);
         this.controls.dispose();
         this.dispose(this.scene);
         this.scene.clear();
@@ -168,8 +233,17 @@ export default class extends Controller {
         this.draw();
     }
 
-    highlight({ detail: { key } }) {
+    // Édition refusée par le serveur : les caisses déplacées localement reprennent la place du dernier plan reçu.
+    rejected({ detail: { message } }) {
+        this.syncCrates(false);
+        this.say(message, 'error');
+    }
+
+    highlight({ detail: { key, locked } }) {
+        this.locked = locked === true;
         this.hoveredKey = key;
+        this.toggleTarget('lock', this.locked);
+        this.startBlink();
         const meshes = [...this.meshes.values()];
         const from = meshes.map((mesh) => mesh.userData.dim);
         const to = meshes.map((mesh) => (key !== null && !mesh.userData.crate.tokens.includes(key) ? 1 : 0));
@@ -178,6 +252,505 @@ export default class extends Controller {
             mesh.userData.dim = from[index] + (to[index] - from[index]) * k;
             this.paint(mesh);
         }));
+    }
+
+    // Les caisses surlignées clignotent doucement tant que la surbrillance dure (rien ne tourne sinon). Mouvement réduit : atténuation fixe des autres.
+    startBlink() {
+        this.stopTween(this.blinkTween);
+        this.blinkTween = null;
+        this.blink = 0;
+        const lit = () => [...this.meshes.values()].filter((mesh) => this.hoveredKey !== null && mesh.userData.crate.tokens.includes(this.hoveredKey));
+
+        if (this.hoveredKey === null || this.motion.matches) {
+            this.meshes.forEach((mesh) => this.paint(mesh));
+            this.draw();
+
+            return;
+        }
+
+        const run = () => {
+            this.blinkTween = this.tween(DURATION.blink, (_, raw) => {
+                this.blink = (1 - Math.cos(raw * 2 * Math.PI)) / 2;
+                lit().forEach((mesh) => this.paint(mesh));
+            }, () => this.hoveredKey !== null && run(), 0, (k) => k);
+        };
+
+        run();
+    }
+
+    // Placement manuel : sélection, glisser-déposer (aperçu vert / rouge), échange, rotation, annulation.
+    boxes(...excluded) {
+        return [...this.meshes.values()].filter((mesh) => !mesh.userData.leaving && !excluded.includes(mesh)).map((mesh) => boxOf(mesh.userData.crate));
+    }
+
+    editable(mesh) {
+        return mesh.userData.crate.missionId !== undefined;
+    }
+
+    crateAt(event, accept) {
+        const area = this.renderer.domElement.getBoundingClientRect();
+        this.raycaster.setFromCamera(new THREE.Vector2(((event.clientX - area.left) / area.width) * 2 - 1, -((event.clientY - area.top) / area.height) * 2 + 1), this.camera);
+        const targets = [...this.meshes.values()].filter((mesh) => mesh.userData.appear > 0.5 && !mesh.userData.leaving && accept(mesh));
+
+        return this.raycaster.intersectObjects(targets, false)[0]?.object ?? null;
+    }
+
+    // Capturé avant OrbitControls : sur une caisse, la caméra ne doit pas bouger pendant le glisser.
+    pressAt(event) {
+        if (event.button !== 0 || this.grids.length === 0 || this.press) {
+            return;
+        }
+
+        const mesh = this.crateAt(event, (candidate) => this.editable(candidate));
+        this.press = { mesh, x: event.clientX, y: event.clientY, wasSelected: mesh !== null && mesh === this.selected };
+
+        if (mesh) {
+            this.controls.enabled = mesh.userData.crate.placed === true;
+            this.hideTooltip();
+        }
+
+        window.addEventListener('pointermove', this.onDragMove);
+        window.addEventListener('pointerup', this.onDragEnd);
+        window.addEventListener('pointercancel', this.onDragEnd);
+        this.stageTarget.focus({ preventScroll: true });
+    }
+
+    stopPress() {
+        window.removeEventListener('pointermove', this.onDragMove);
+        window.removeEventListener('pointerup', this.onDragEnd);
+        window.removeEventListener('pointercancel', this.onDragEnd);
+        this.press = null;
+        this.controls.enabled = true;
+    }
+
+    dragTo(event) {
+        if (!this.press) {
+            return;
+        }
+
+        if (!this.drag) {
+            if (!this.press.mesh || this.press.mesh.userData.crate.placed || Math.hypot(event.clientX - this.press.x, event.clientY - this.press.y) < DRAG_THRESHOLD) {
+                return;
+            }
+
+            this.startDrag(this.press.mesh);
+        }
+
+        this.lastEvent = event;
+        this.aim(event);
+    }
+
+    startDrag(mesh) {
+        this.drag = { mesh, turned: false, candidate: null, problem: null, swapWith: null };
+        this.select(mesh);
+        mesh.userData.lifted = true;
+        this.paint(mesh);
+        this.renderer.domElement.classList.add('is-dragging');
+    }
+
+    aim(event) {
+        const { drag } = this;
+        const crate = drag.mesh.userData.crate;
+        const others = this.boxes(drag.mesh);
+        const hit = event.shiftKey ? null : this.crateAt(event, (mesh) => mesh !== drag.mesh && this.editable(mesh));
+        drag.swapWith = null;
+        drag.problem = null;
+        this.markSwap(null);
+
+        if (hit && hit.userData.crate.size === crate.size) {
+            const there = boxOf(hit.userData.crate);
+            const problem = layoutProblem(this.grids, this.boxes(drag.mesh, hit), [there, boxOf(crate)]);
+
+            if (problem === null) {
+                drag.swapWith = hit;
+                drag.candidate = there;
+                this.markSwap(hit);
+                this.showGhost(there, true);
+                this.hideNotice();
+
+                return;
+            }
+        }
+
+        const dims = { width: drag.turned ? crate.length : crate.width, height: crate.height, length: drag.turned ? crate.width : crate.length, size: crate.size };
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -((drag.candidate?.y ?? crate.y) + dims.height / 2));
+        const point = this.raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+
+        if (!point) {
+            return;
+        }
+
+        drag.candidate = snap(this.grids, others, dims, point.x, point.z);
+        drag.problem = drag.candidate ? restProblem(this.grids, others, drag.candidate) : 'outside';
+
+        if (drag.candidate) {
+            this.showGhost(drag.candidate, drag.problem === null);
+        }
+
+        drag.problem ? this.say(this.labelsValue.problems?.[drag.problem], 'error', false) : this.hideNotice();
+    }
+
+    release(event) {
+        const { press, drag } = this;
+        this.stopPress();
+
+        if (!press) {
+            return;
+        }
+
+        if (drag) {
+            this.finishDrag(event.type !== 'pointercancel');
+
+            return;
+        }
+
+        if (event.type === 'pointercancel' || Math.hypot(event.clientX - press.x, event.clientY - press.y) >= DRAG_THRESHOLD) {
+            return;
+        }
+
+        this.clickAt(press.mesh, press.wasSelected);
+    }
+
+    // Clic simple : sélectionne la caisse et verrouille la surbrillance de sa livraison ; second clic ou clic dans le vide : relâche.
+    clickAt(mesh, wasSelected) {
+        const release = mesh === null || (wasSelected && this.locked);
+        this.select(release ? null : mesh);
+        window.dispatchEvent(new CustomEvent('cargo:lock', { detail: { key: release ? null : mesh.userData.crate.key } }));
+
+        if (!release) {
+            track('crate-select');
+        }
+    }
+
+    finishDrag(commit) {
+        const { drag } = this;
+        this.drag = null;
+        drag.mesh.userData.lifted = false;
+        this.paint(drag.mesh);
+        this.markSwap(null);
+        this.removeGhost();
+        this.renderer.domElement.classList.remove('is-dragging');
+        this.hideNotice();
+
+        if (!commit || !drag.candidate) {
+            return;
+        }
+
+        if (drag.problem) {
+            this.say(this.labelsValue.problems?.[drag.problem], 'error');
+        } else if (drag.swapWith) {
+            this.swap(drag.mesh, drag.swapWith);
+        } else if (!sameBox(drag.candidate, drag.mesh.userData.crate)) {
+            this.move(drag.mesh, drag.candidate);
+        }
+    }
+
+    select(mesh) {
+        if (mesh === this.selected) {
+            return;
+        }
+
+        const previous = this.selected;
+        this.selected = mesh;
+
+        [previous, mesh].filter(Boolean).forEach((crate) => {
+            crate.userData.selected = crate === mesh;
+            this.outline(crate);
+            this.paint(crate);
+        });
+
+        this.applyTouchMode();
+        this.updateTools();
+        this.draw();
+    }
+
+    outline(mesh) {
+        const { userData } = mesh;
+        userData.outline?.geometry.dispose();
+        userData.outline?.removeFromParent();
+        userData.outline = null;
+
+        if (!userData.selected) {
+            return;
+        }
+
+        const { crate } = userData;
+        const geometry = new THREE.EdgesGeometry(new THREE.BoxGeometry(crate.width + 0.14, crate.height + 0.14, crate.length + 0.14));
+        userData.outline = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: SELECT_COLOR }));
+        mesh.add(userData.outline);
+    }
+
+    markSwap(mesh) {
+        if (this.swapTarget === mesh) {
+            return;
+        }
+
+        const previous = this.swapTarget;
+        this.swapTarget = mesh;
+        [previous, mesh].filter(Boolean).forEach((crate) => {
+            crate.userData.swap = crate === mesh;
+            this.paint(crate);
+        });
+        this.draw();
+    }
+
+    showGhost(box, valid) {
+        const key = [box.width, box.height, box.length].join('x');
+
+        if (!this.ghost || this.ghost.userData.key !== key) {
+            this.removeGhost();
+            const geometry = new THREE.BoxGeometry(box.width - CRATE_GAP, box.height - CRATE_GAP, box.length - CRATE_GAP);
+            this.ghost = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.45, depthWrite: false, depthTest: false }));
+            this.ghost.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ depthTest: false })));
+            this.ghost.renderOrder = 10;
+            this.ghost.children[0].renderOrder = 10;
+            this.ghost.userData.key = key;
+            this.scene.add(this.ghost);
+        }
+
+        const color = valid ? this.accents.pickup : this.accents.stacked;
+        this.ghost.material.color.copy(color);
+        this.ghost.children[0].material.color.copy(color);
+        this.ghost.position.set(box.x + box.width / 2, box.y + box.height / 2, box.z + box.length / 2);
+        this.draw();
+    }
+
+    removeGhost() {
+        if (this.ghost) {
+            this.dispose(this.ghost);
+            this.ghost.removeFromParent();
+            this.ghost = null;
+            this.draw();
+        }
+    }
+
+    // Déplacement optimiste : la caisse bouge tout de suite, le serveur valide et renvoie le plan (ou refuse : `rejected`).
+    move(mesh, box, record = true) {
+        const crate = mesh.userData.crate;
+
+        if (record) {
+            this.undoStack.push({ kind: 'move', mission: crate.missionId, index: crate.index, box: boxOf(crate) });
+        }
+
+        this.relocate([[mesh, box]]);
+        this.send('moveCrate', { mission: crate.missionId, index: crate.index, x: box.x, y: box.y, z: box.z, width: box.width, length: box.length });
+        track('cargo-move');
+    }
+
+    swap(first, second, record = true) {
+        const [one, two] = [first.userData.crate, second.userData.crate];
+
+        if (record) {
+            this.undoStack.push({ kind: 'swap', first: { mission: one.missionId, index: one.index }, second: { mission: two.missionId, index: two.index } });
+        }
+
+        this.relocate([[first, boxOf(two)], [second, boxOf(one)]]);
+        this.send('swapCrates', { mission: one.missionId, index: one.index, otherMission: two.missionId, otherIndex: two.index });
+        track('cargo-swap');
+    }
+
+    relocate(moves) {
+        moves.forEach(([mesh]) => [...this.meshes].filter(([, value]) => value === mesh).forEach(([id]) => this.meshes.delete(id)));
+        moves.forEach(([mesh, box]) => {
+            const crate = { ...mesh.userData.crate, x: box.x, y: box.y, z: box.z, width: box.width, length: box.length };
+            mesh.userData.crate = crate;
+            this.meshes.set(crateId(crate), mesh);
+            mesh.geometry.dispose();
+            mesh.geometry = new THREE.BoxGeometry(crate.width - CRATE_GAP, crate.height - CRATE_GAP, crate.length - CRATE_GAP);
+            mesh.children[0].geometry.dispose();
+            mesh.children[0].geometry = new THREE.EdgesGeometry(mesh.geometry);
+            mesh.userData.halo.geometry.dispose();
+            mesh.userData.halo.geometry = haloGeometry(crate);
+            mesh.position.set(crate.x + crate.width / 2, crate.y + crate.height / 2, crate.z + crate.length / 2);
+            mesh.userData.restY = mesh.position.y;
+            this.outline(mesh);
+        });
+        this.updateTools();
+        this.draw();
+    }
+
+    async send(action, args) {
+        const element = document.querySelector('[data-live-name-value="RoutePanel"]');
+
+        if (element) {
+            await (await getComponent(element)).action(action, args);
+        }
+    }
+
+    rotate() {
+        if (this.drag) {
+            this.drag.turned = !this.drag.turned;
+            this.lastEvent && this.aim(this.lastEvent);
+
+            return;
+        }
+
+        const crate = this.selected?.userData.crate;
+
+        if (!crate?.rotatable) {
+            return;
+        }
+
+        const [dw, dl] = [crate.width - crate.length, crate.length - crate.width];
+        const turned = { ...boxOf(crate), width: crate.length, length: crate.width };
+        const options = [[0, 0], [dw, 0], [0, dl], [dw, dl]].map(([dx, dz]) => ({ ...turned, x: crate.x + dx, z: crate.z + dz }));
+        this.tryMove(this.selected, options);
+        track('cargo-rotate');
+    }
+
+    nudge(dx, dz) {
+        const crate = this.selected?.userData.crate;
+
+        if (crate) {
+            this.tryMove(this.selected, [{ ...boxOf(crate), x: crate.x + dx, z: crate.z + dz }]);
+        }
+    }
+
+    // Première option valide (posée sur ce qu'il y a dessous) ; sinon le motif du premier refus.
+    tryMove(mesh, options) {
+        const others = this.boxes(mesh);
+        let firstProblem = null;
+
+        for (const option of options) {
+            const grid = nearestGrid(this.grids, option.x + option.width / 2, option.z + option.length / 2);
+            const box = { ...option, y: restHeight(grid, others, option) };
+            const problem = restProblem(this.grids, others, box);
+
+            if (problem === null) {
+                this.move(mesh, box);
+
+                return;
+            }
+
+            firstProblem ??= problem;
+        }
+
+        this.say(this.labelsValue.problems?.[firstProblem], 'error');
+    }
+
+    undo() {
+        const entry = this.undoStack.pop();
+        const find = ({ mission, index }) => [...this.meshes.values()].find((mesh) => mesh.userData.crate.missionId === mission && mesh.userData.crate.index === index);
+
+        if (!entry) {
+            return;
+        }
+
+        if (entry.kind === 'move') {
+            const mesh = find(entry);
+            mesh && this.move(mesh, entry.box, false);
+        } else {
+            const [first, second] = [find(entry.first), find(entry.second)];
+            first && second && this.swap(first, second, false);
+        }
+
+        track('cargo-undo');
+        this.updateTools();
+    }
+
+    resetPlacement() {
+        this.undoStack = [];
+        this.send('resetPlacement', {});
+        track('cargo-placement-reset');
+    }
+
+    resetMission() {
+        const crate = this.selected?.userData.crate;
+
+        if (crate) {
+            this.undoStack = [];
+            this.send('resetPlacement', { mission: crate.missionId });
+            track('cargo-mission-reset');
+        }
+    }
+
+    unlock() {
+        window.dispatchEvent(new CustomEvent('cargo:lock', { detail: { key: null } }));
+    }
+
+    keyDown(event) {
+        if (event.target.closest?.('input, select, textarea')) {
+            return;
+        }
+
+        const key = event.key.toLowerCase();
+        const onStage = this.stageTarget.contains(event.target);
+
+        if (key === 'escape' && (this.drag || this.selected)) {
+            this.drag ? this.finishDrag(false) : this.select(null);
+        } else if ((key === 'enter' || key === 'v') && onStage && this.selected && event.target === this.stageTarget) {
+            this.togglePlaced();
+        } else if (key === 'r' && onStage) {
+            this.rotate();
+        } else if (key === 'z' && (event.ctrlKey || event.metaKey) && onStage) {
+            this.undo();
+        } else if (NUDGES[event.key] && onStage && this.selected && event.target === this.stageTarget) {
+            this.nudge(...NUDGES[event.key]);
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+    }
+
+    togglePlaced() {
+        const mesh = this.selected;
+
+        if (!mesh) {
+            return;
+        }
+
+        const crate = mesh.userData.crate;
+        mesh.userData.crate = { ...crate, placed: !crate.placed };
+        this.paint(mesh);
+        this.updateTools();
+        this.draw();
+        this.send('markCrate', { mission: crate.missionId, index: crate.index, placed: crate.placed ? 0 : 1 });
+        track('cargo-placed');
+    }
+
+    updateTools() {
+        const crate = this.selected?.userData.crate;
+        const all = [...this.meshes.values()].filter((mesh) => !mesh.userData.leaving);
+        const placed = all.filter((mesh) => mesh.userData.crate.placed).length;
+
+        if (this.hasActionsTarget) {
+            this.actionsTarget.hidden = !crate;
+            this.placedTargets.forEach((button) => button.setAttribute('aria-pressed', String(crate?.placed === true)));
+        }
+
+        this.placedCountTargets.forEach((element) => {
+            element.textContent = `${placed}/${all.length}`;
+            element.closest('[data-placed-badge]')?.toggleAttribute('hidden', all.length === 0);
+        });
+
+        const manual = this.cargoPlan.manual ?? [];
+        const states = { rotate: !crate?.rotatable || crate?.placed === true, undo: this.undoStack.length === 0, resetMission: !crate || !manual.includes(crate.missionId), resetAll: manual.length === 0 };
+
+        Object.entries(states).forEach(([name, disabled]) => this.targets.findAll(name).forEach((button) => {
+            button.disabled = disabled;
+        }));
+    }
+
+    say(message, tone = 'warn', autohide = true) {
+        if (!this.hasNoticeTarget || !message) {
+            return;
+        }
+
+        clearTimeout(this.noticeTimer);
+        this.noticeTarget.textContent = message;
+        this.noticeTarget.dataset.tone = tone;
+        this.noticeTarget.hidden = false;
+
+        if (autohide) {
+            this.noticeTimer = setTimeout(() => this.hideNotice(), NOTICE_DURATION);
+        }
+    }
+
+    hideNotice() {
+        if (this.hasNoticeTarget) {
+            this.noticeTarget.hidden = true;
+        }
     }
 
     resetView() {
@@ -218,7 +791,7 @@ export default class extends Controller {
 
         const hadGrid = this.grids.length > 0;
         this.groupsKey = key;
-        this.grids = groups.flatMap((group) => group.grids.map((grid) => ({ ...grid, x: group.x + grid.x, z: group.z + grid.z })));
+        this.grids = groups.flatMap((group) => group.grids.map((grid) => ({ ...grid, minSize: grid.minSize ?? group.minSize, x: group.x + grid.x, z: group.z + grid.z })));
         const hasGrid = this.grids.length > 0;
         this.emptyTarget.hidden = hasGrid;
         this.stageTarget.hidden = !hasGrid;
@@ -320,6 +893,7 @@ export default class extends Controller {
 
         this.updateLegend(crates);
         this.startPulse();
+        this.updateTools();
     }
 
     crate(crate) {
@@ -327,7 +901,14 @@ export default class extends Controller {
         const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: crate.color, transparent: true, depthWrite: !crate.phantom }));
         mesh.position.set(crate.x + crate.width / 2, crate.y + crate.height / 2, crate.z + crate.length / 2);
         mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ transparent: true })));
-        mesh.userData = { crate, restY: mesh.position.y, appear: 1, dim: 0, leaving: false };
+        const halo = new THREE.Mesh(haloGeometry(crate), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.BackSide, depthWrite: false }));
+        halo.renderOrder = -1;
+        halo.visible = false;
+        mesh.add(halo);
+        const check = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: checkTexture(), transparent: true, depthWrite: false }));
+        check.renderOrder = 2;
+        mesh.add(check);
+        mesh.userData = { crate, halo, check, restY: mesh.position.y, appear: 1, dim: 0, leaving: false };
 
         return mesh;
     }
@@ -357,6 +938,14 @@ export default class extends Controller {
 
         if (this.pointed === mesh) {
             this.leave();
+        }
+
+        if (this.drag?.mesh === mesh) {
+            this.finishDrag(false);
+        }
+
+        if (this.selected === mesh) {
+            this.select(null);
         }
 
         const done = () => {
@@ -403,33 +992,51 @@ export default class extends Controller {
         return crate.phantom ? this.accents.pickup : null;
     }
 
+    // Bordure = couleur de la ressource (jamais vert / orange) ; l'état de l'arrêt est un halo : vert = à charger, orange = à décharger, rouge = empilée.
     paint(mesh) {
-        const { crate, appear, dim } = mesh.userData;
-        const pointed = this.pointed === mesh;
+        const { crate, appear, dim, halo, check, lifted, swap, selected } = mesh.userData;
+        const raised = this.pointed === mesh || selected === true;
         const pulseAccent = this.pulseAccent(crate);
         const pulse = pulseAccent ? this.pulse : 0;
-        const edgeAccent = crate.stacked ? this.accents.stacked : pulseAccent;
-        const base = crate.phantom ? 0.3 + 0.3 * pulse : 0.85;
+        const haloAccent = swap ? this.accents.pickup : (crate.stacked ? this.accents.stacked : pulseAccent);
+        const lit = this.hoveredKey !== null && crate.tokens.includes(this.hoveredKey);
+        const base = crate.phantom ? 0.3 : 0.85;
 
         mesh.material.color.set(crate.color);
-        if (pulse > 0) {
-            mesh.material.color.lerp(pulseAccent, 0.45 * pulse);
+        if (lit && this.blink > 0) {
+            mesh.material.color.lerp(this.palette.contrastColor, 0.4 * this.blink);
         }
-        mesh.material.opacity = Math.min(1, (pointed ? base + 0.1 : base) * appear * (1 - 0.75 * dim));
+        mesh.material.opacity = Math.min(1, (raised ? base + 0.1 : base) * appear * (1 - 0.75 * dim) * (lifted ? 0.3 : 1));
 
         const edges = mesh.children[0].material;
-        if (pointed) {
-            edges.color.copy(this.palette.contrastColor);
-        } else if (edgeAccent) {
-            edges.color.copy(edgeAccent);
-        } else {
-            edges.color.set(crate.color).multiplyScalar(this.palette.edgeShade);
-        }
+        edges.color.copy(this.edgeColor(crate.color));
         edges.opacity = appear * (1 - 0.8 * dim);
 
-        if (!mesh.userData.leaving) {
-            mesh.scale.setScalar(pointed ? 1.04 : 1);
+        check.visible = crate.placed === true;
+        check.material.opacity = appear * (1 - 0.8 * dim);
+        placeCheck(mesh);
+
+        halo.visible = haloAccent !== null;
+        if (halo.visible) {
+            halo.material.color.copy(haloAccent);
+            halo.material.opacity = Math.min(1, (0.2 + 0.3 * pulse + (lit ? 0.15 : 0)) * appear * (1 - 0.8 * dim));
         }
+
+        if (!mesh.userData.leaving) {
+            mesh.scale.setScalar(raised ? 1.04 : 1);
+        }
+    }
+
+    // Bordure lisible sur le sol gris : couleur de la ressource, éclaircie si trop sombre (thème sombre), assombrie si trop claire.
+    edgeColor(hex) {
+        const color = new THREE.Color(hex);
+        const luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+
+        if (this.theme === 'dark') {
+            return luminance < 0.12 ? color.lerp(new THREE.Color('#ffffff'), 0.5) : color.multiplyScalar(Math.min(1.35, 1 / Math.max(luminance, 0.01)));
+        }
+
+        return luminance > 0.7 ? color.multiplyScalar(0.55) : color.multiplyScalar(0.8);
     }
 
     updateLegend(crates) {
@@ -479,7 +1086,7 @@ export default class extends Controller {
     // Finger: one-finger vertical swipes scroll the page (touch-action: pan-y), sideways swipes orbit, two fingers zoom and tilt.
     applyTouchMode() {
         const touch = this.coarse.matches;
-        this.renderer.domElement.style.touchAction = touch ? 'pan-y' : 'none';
+        this.renderer.domElement.style.touchAction = touch && !this.selected ? 'pan-y' : 'none';
         this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: touch ? THREE.TOUCH.DOLLY_ROTATE : THREE.TOUCH.DOLLY_PAN };
         this.element.classList.toggle('is-touch', touch);
     }
@@ -531,7 +1138,7 @@ export default class extends Controller {
     }
 
     announce(key) {
-        if (key !== this.hoveredKey) {
+        if (!this.locked && key !== this.hoveredKey) {
             window.dispatchEvent(new CustomEvent('cargo:highlight', { detail: { key } }));
         }
     }
@@ -705,7 +1312,22 @@ export default class extends Controller {
     draw() {
         if (this.size.width > 0) {
             this.renderer.render(this.scene, this.camera);
+            this.placeActions();
         }
+    }
+
+    // La barre d'actions suit la caisse sélectionnée : elle est ancrée au-dessus de son dessus, projeté à l'écran.
+    placeActions() {
+        if (!this.hasActionsTarget || !this.selected) {
+            return;
+        }
+
+        const { crate } = this.selected.userData;
+        const spot = point(crate.x + crate.width / 2, crate.y + crate.height, crate.z + crate.length / 2).project(this.camera);
+        const bar = this.actionsTarget;
+        const x = Math.min(Math.max(((spot.x + 1) / 2) * this.size.width, bar.offsetWidth / 2 + 4), this.size.width - bar.offsetWidth / 2 - 4);
+        const y = Math.min(Math.max(((1 - spot.y) / 2) * this.size.height - 10, bar.offsetHeight + 4), this.size.height - 4);
+        bar.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
     }
 
     dispose(root) {

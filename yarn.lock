@@ -838,6 +838,11 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
+"@simonwep/pickr@^1.10.3":
+  version "1.10.3"
+  resolved "https://registry.yarnpkg.com/@simonwep/pickr/-/pickr-1.10.3.tgz#4d22d141215190655ce8cb04852307d8663191bd"
+  integrity sha512-/vDqVAPU2mOOc5MXqia5MH+pwyfmSUyBKxSaj+YTZB78RmGfOtRXwD54fFmyHeUJ3Y4YWVGLJCy4zjxgDfylRA==
+
 "@symfony/stimulus-bridge@^4.0.2":
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/@symfony/stimulus-bridge/-/stimulus-bridge-4.0.2.tgz#a95b0ea09a20179376c669e809ec75fad70a3a4d"

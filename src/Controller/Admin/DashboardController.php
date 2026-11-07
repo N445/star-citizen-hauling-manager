@@ -6,6 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -28,6 +29,11 @@ final class DashboardController extends AbstractDashboardController
             ->setTranslationDomain('admin');
     }
 
+    public function configureAssets(): Assets
+    {
+        return Assets::new()->addWebpackEncoreEntry('admin');
+    }
+
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToRoute('menu.site', 'fa fa-arrow-left', 'home');
@@ -35,9 +41,10 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(UserCrudController::class, 'menu.users', 'fa fa-user');
         yield MenuItem::section('menu.planning');
         yield MenuItem::linkTo(TourCrudController::class, 'menu.tours', 'fa fa-route');
+        yield MenuItem::linkTo(RouteReportCrudController::class, 'menu.reports', 'fa fa-flag');
         yield MenuItem::section('menu.catalog');
         yield MenuItem::linkTo(ShipCrudController::class, 'menu.ships', 'fa fa-rocket');
         yield MenuItem::linkTo(CommodityCrudController::class, 'menu.commodities', 'fa fa-palette');
-        yield MenuItem::linkTo(LocationCrudController::class, 'menu.locations', 'fa fa-location-dot');
+        yield MenuItem::linkToRoute('menu.locations', 'fa fa-location-dot', 'admin_locations_index');
     }
 }

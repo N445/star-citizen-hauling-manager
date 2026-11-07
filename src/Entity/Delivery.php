@@ -17,6 +17,10 @@ class Delivery
     #[ORM\Column(options: ['default' => false])]
     private bool $delivered = false;
 
+    /** quantité réellement livrée, saisie en route ; null = l'estimation de la mission */
+    #[ORM\Column(nullable: true)]
+    private ?int $actualQuantity = null;
+
     #[ORM\ManyToOne(inversedBy: 'deliveries')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Mission $mission;
@@ -69,5 +73,23 @@ class Delivery
     public function quantity(): int
     {
         return $this->quantity;
+    }
+
+    /**
+     * La quantité qui compte pour la capacité et le chargement de la soute.
+     */
+    public function effectiveQuantity(): int
+    {
+        return $this->actualQuantity ?? $this->quantity;
+    }
+
+    public function hasActualQuantity(): bool
+    {
+        return null !== $this->actualQuantity;
+    }
+
+    public function adjustQuantity(?int $quantity): void
+    {
+        $this->actualQuantity = $quantity;
     }
 }

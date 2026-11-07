@@ -1,0 +1,10 @@
+{% trans_default_domain 'admin' %}
+{# Variables : parent (Location|null), draft (string). #}
+<form method="post" action="{{ path('admin_locations_add') }}" class="loc-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('admin_location') }}">
+    <input type="hidden" name="parent" value="{{ parent ? parent.id : '' }}">
+    <label for="loc-add-names" class="form-label">{{ 'location.add_label'|trans }}</label>
+    <textarea id="loc-add-names" name="names" class="form-control" rows="3" required aria-describedby="loc-add-help" placeholder="{{ 'location.add_placeholder'|trans }}">{{ draft }}</textarea>
+    <div id="loc-add-help" class="form-text mb-2">{{ 'location.add_help'|trans }}</div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-plus" aria-hidden="true"></i> {{ 'location.add_button'|trans }}</button>
+</form>

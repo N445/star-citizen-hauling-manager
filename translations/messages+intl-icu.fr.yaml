@@ -123,7 +123,7 @@ mission:
 cargo:
     title: Soute
     scale: 1 case = 1 SCU
-    controls: 'Glisser : tourner · clic droit : déplacer · molette : zoom'
+    controls: 'Glisser : tourner · clic droit : déplacer · molette : zoom · clic sur une caisse : sélectionner et verrouiller la surbrillance · glisser une caisse : la déplacer (Maj : sans échange)'
     controls_touch: 'Balayer de côté : tourner · deux doigts : zoom et inclinaison · balayer en hauteur : faire défiler la page'
     no_grid: 'Choisis un vaisseau du catalogue pour voir sa grille cargo.'
     empty_title: Pas encore de grille cargo
@@ -140,6 +140,31 @@ cargo:
     warning:
         stacked: 'Faute de place, {count, plural, one {# caisse doit être posée} other {# caisses doivent être posées}} sur une caisse livrée avant elle.'
         unplaced: '{quantity} SCU ne trouvent pas de place dans la soute à un moment du trajet.'
+    edit:
+        toolbar: Placement des caisses
+        actions: Caisse sélectionnée
+        undo: Annuler
+        undo_hint: 'Annuler le dernier déplacement (Ctrl+Z)'
+        reset_all: Réinitialiser le placement auto
+        reset_all_hint: 'Efface tous les placements manuels de la tournée et revient au placement automatique'
+        reset_mission: Cette mission
+        reset_mission_hint: 'Efface le placement manuel de la mission de la caisse sélectionnée'
+        rotate: Pivoter
+        rotate_hint: 'Tourner la caisse d''un quart de tour (R)'
+        placed: Posée
+        placed_hint: 'Cette caisse est bien posée : elle reste en place tant que tu ne décoches pas (Entrée ou V)'
+        placed_count: posées
+        placed_count_hint: 'Caisses marquées comme bien posées'
+        locked: Surbrillance verrouillée
+        error:
+            outside: 'Hors de la grille de la soute.'
+            shape: 'Cette caisse ne peut pas prendre cette forme.'
+            size: 'Cette grille n''accepte pas les caisses de cette taille.'
+            overlap: 'Une autre caisse occupe déjà cette place.'
+            unsupported: 'La caisse ne serait pas soutenue : le sol ou des caisses doivent couvrir toute sa surface.'
+            supports: 'Une autre caisse perdrait son appui.'
+            swap: 'On ne peut échanger que deux caisses différentes de même taille.'
+            placed: 'Cette caisse est marquée comme posée : décoche-la d''abord pour la déplacer.'
     crate:
         label: '{size} SCU {resource} · {mission} → {dropoff}'
         label_stacked: '{size} SCU {resource} · {mission} → {dropoff} — posée sur une caisse livrée avant, faute de place'
@@ -173,7 +198,7 @@ route:
         current: Prochain arrêt
         done: Arrêt terminé
         load: Cargaison à bord après cet arrêt
-        drop: 'Livre {quantity} SCU'
+        drop: Livre
         pickup: Récupère
         split_pickup: 'Quantité répartie entre {count} lieux de ramassage.'
     error:
@@ -181,3 +206,43 @@ route:
         mission_exceeds_capacity: 'Une mission transporte {quantity} SCU, plus que la capacité du vaisseau ({capacity} SCU).'
         no_route: "Aucun parcours possible : la capacité du vaisseau ne permet pas d'enchaîner ces missions."
         too_many_combinations: 'Trop de combinaisons à explorer : réduis le nombre de missions de la tournée.'
+
+quantity:
+    edit: Modifier la quantité de SCU
+    pickup: Récupéré
+    drop: Livré
+    estimate: 'estimé {quantity}'
+    remaining: 'reste à répartir : {remaining} sur {total}'
+    warning:
+        over: 'Les ramassages totalisent {sum} SCU, plus que les {total} SCU de la mission.'
+        under: 'Les ramassages totalisent {sum} SCU, moins que les {total} SCU de la mission.'
+        drops: 'Vous avez récupéré {picked} SCU mais les livraisons totalisent {drops} SCU.'
+    error:
+        range: 'Saisissez un nombre entier de SCU entre 0 et {maximum}.'
+        exceeds_capacity: 'Cette mission transporterait {quantity} SCU, plus que la capacité du vaisseau ({capacity} SCU).'
+
+report:
+    open: Signaler un problème sur cette route
+    title: Signaler un problème
+    intro: Dites-nous ce qui ne va pas sur cette route. Un instantané de votre tournée (missions, parcours, soute) est enregistré avec votre message pour pouvoir le reproduire.
+    category:
+        label: De quoi s'agit-il ?
+        route: Parcours (ordre des arrêts)
+        cargo: Soute (caisses)
+        quantities: Quantités
+        other: Autre
+    message:
+        label: Qu'est-ce qui ne va pas ?
+        placeholder: Décrivez ce que vous attendiez et ce que vous avez obtenu.
+    snapshot_hint: Votre tournée telle qu'elle est maintenant est jointe.
+    send: Envoyer le signalement
+    sent: Merci, votre signalement a bien été envoyé.
+    status:
+        open: Ouvert
+        resolved: Résolu
+    error:
+        empty: Expliquez ce qui ne va pas.
+        too_long: 'Votre message est trop long ({maximum} caractères maximum).'
+        too_many: 'Trop de signalements cette dernière heure ({maximum} maximum). Réessayez plus tard.'
+        too_soon: 'Patientez {seconds} secondes avant d''envoyer un autre signalement.'
+        anonymous: 'Votre session n''a pas pu être identifiée : rechargez la page et réessayez.'

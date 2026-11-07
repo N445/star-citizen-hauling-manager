@@ -41,7 +41,7 @@ final class ShipCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('ship.singular')
             ->setEntityLabelInPlural('ship.plural')
             ->setSearchFields(['manufacturer', 'name', 'slug'])
-            ->setDefaultSort(['manufacturer' => 'ASC', 'name' => 'ASC']);
+            ->setDefaultSort(['name' => 'ASC', 'manufacturer' => 'ASC']);
     }
 
     public function configureActions(Actions $actions): Actions

@@ -64,11 +64,21 @@ final class CargoBay
 
     public function availableSpot(float $x, float $y, float $z, int $width, int $height, int $length): ?Spot
     {
+        $spot = $this->spotAt($x, $y, $z, $width, $height, $length);
+
+        return null !== $spot && $this->isFree($spot) ? $spot : null;
+    }
+
+    /**
+     * La case aux coordonnées du monde, si la caisse tient entièrement dans cette grille (libre ou non).
+     */
+    public function spotAt(float $x, float $y, float $z, int $width, int $height, int $length): ?Spot
+    {
         $spot = new Spot($this, (int) round($x - $this->x), (int) round($y - $this->y), (int) round($z - $this->z), $width, $height, $length);
         $inside = $spot->offsetX >= 0 && $spot->offsetY >= 0 && $spot->offsetZ >= 0
             && $spot->offsetX + $width <= $this->width && $spot->offsetY + $height <= $this->height && $spot->offsetZ + $length <= $this->length;
 
-        return $inside && $this->isFree($spot) ? $spot : null;
+        return $inside ? $spot : null;
     }
 
     public function occupy(Spot $spot): void
@@ -85,7 +95,7 @@ final class CargoBay
         }
     }
 
-    private function accepts(int $size): bool
+    public function accepts(int $size): bool
     {
         return $size <= ($this->maxSize ?? 32) && $size >= ($this->minSize ?? 1);
     }
@@ -122,12 +132,12 @@ final class CargoBay
         }
     }
 
-    private function isFree(Spot $spot): bool
+    public function isFree(Spot $spot): bool
     {
         return [] === array_intersect_key(array_flip($this->cellsOf($spot)), $this->occupied);
     }
 
-    private function isSupported(Spot $spot): bool
+    public function isSupported(Spot $spot): bool
     {
         if (0 === $spot->offsetY) {
             return true;

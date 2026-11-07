@@ -37,11 +37,54 @@ class Location
     ) {
         $this->name = trim($name);
         $this->children = new ArrayCollection();
+        $this->parent?->children->add($this);
     }
 
     public function rename(string $name): void
     {
         $this->name = trim($name);
+    }
+
+    /**
+     * Change de parent (null = devient un système). Les règles de doublon de nom sont vérifiées par `LocationEditor`.
+     */
+    public function moveTo(?self $parent): void
+    {
+        if (null !== $parent && $parent->isSelfOrDescendantOf($this)) {
+            throw new \LogicException('A location cannot be moved into itself or one of its descendants.');
+        }
+
+        $this->parent?->children->removeElement($this);
+        $this->parent = $parent;
+        $parent?->children->add($this);
+    }
+
+    public function isSelfOrDescendantOf(self $ancestor): bool
+    {
+        for ($location = $this; null !== $location; $location = $location->parent) {
+            if ($location === $ancestor) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return list<Location> tous les descendants, en profondeur d'abord */
+    public function descendants(): array
+    {
+        $descendants = [];
+        foreach ($this->children() as $child) {
+            $descendants[] = $child;
+            array_push($descendants, ...$child->descendants());
+        }
+
+        return $descendants;
+    }
+
+    public function isLeaf(): bool
+    {
+        return $this->children->isEmpty();
     }
 
     public function id(): ?int
@@ -67,7 +110,10 @@ class Location
     /** @return list<Location> */
     public function children(): array
     {
-        return array_values($this->children->toArray());
+        $children = array_values($this->children->toArray());
+        usort($children, static fn (self $a, self $b): int => strnatcasecmp($a->name, $b->name));
+
+        return $children;
     }
 
     /** @return list<Location> du système jusqu'à ce lieu compris */

@@ -4,6 +4,7 @@ menu:
     users: Users
     planning: Planning
     tours: Tours
+    reports: Route reports
     missions: Missions
     catalog: Catalog
     ships: Ships
@@ -74,15 +75,94 @@ commodity:
     color: Color
 
 location:
+    title: Locations
+    root_title: Location tree
+    root_intro: Systems and everything they contain. Open a location to manage it.
     system: System
     systems: Systems
-    singular: Location
-    plural: Locations
+    kind:
+        system: System
+        folder: Location with sub-locations
+        leaf: Leaf location (proposed in the site's suggestions)
     name: Name
+    full_path: Full path
+    type: Type
     children: Sub-locations
+    descendants: Descendants
+    children_count: '{count, plural, =0 {no sub-location} one {# sub-location} other {# sub-locations}}'
+    descendants_count: '{count, plural, =0 {nothing below} one {# location below} other {# locations below}}'
+    total_count: '{count, plural, =0 {No location yet} one {# location in total} other {# locations in total}}'
     open: Open
+    breadcrumb: Breadcrumb
+    all_systems: All systems
+    tree: Tree
+    tree_empty: No location here yet.
+    tree_toggle: Expand or collapse {name}
+    tree_filter: Filter the tree
+    tree_filter_placeholder: Search a location…
+    tree_expand_all: Expand all
+    tree_collapse_all: Collapse all
+    tree_matches: '{count, plural, =0 {No match} one {# match} other {# matches}}'
+    direct_children: Direct sub-locations
+    add_title_root: Add a system
+    add_title: Add a location here
+    add_help: One name per line to add several at once. Names must be unique among siblings.
+    add_label: Names
+    add_placeholder: "Lorville\nArea 18\nNew Babbage"
+    add_button: Add
     add_system: Add a system
-    add_child: Add a sub-location
-    add: Add a location
-    new_system: New system
-    new_in: 'New location in {parent}'
+    rename: Rename
+    rename_button: Rename
+    move: Move
+    move_label: New parent
+    move_root: No parent (make it a system)
+    move_button: Move
+    move_help: Descendants follow. A location cannot go under itself or one of its descendants.
+    delete: Delete
+    delete_warning: 'Delete "{name}" permanently? {count, plural, =0 {No other location will be deleted.} one {# sub-location will be deleted with it.} other {# sub-locations will be deleted with it.}}'
+    delete_button: Yes, delete
+    error:
+        empty: Enter at least one name.
+        too_long: 'The name "{name}" is too long (maximum {max} characters).'
+        duplicate: 'A location named "{name}" already exists here.'
+        cycle: 'Cannot move "{name}" under "{parent}": it is one of its descendants.'
+    flash:
+        added: '{count, plural, one {# location added.} other {# locations added.}}'
+        renamed: 'Renamed to "{name}".'
+        moved: 'Moved: {path}'
+        deleted: '"{name}" deleted ({count, plural, =0 {no sub-location} one {# sub-location} other {# sub-locations}} removed with it).'
+
+report:
+    singular: Report
+    plural: Route reports
+    category: Category
+    status: Status
+    message: Message
+    author: Author
+    tour: Tour
+    tour_deleted: tour deleted
+    created_at: Reported on
+    resolve: Mark as resolved
+    reopen: Reopen
+    flash:
+        resolved: Report marked as resolved.
+        reopened: Report reopened.
+    snapshot:
+        tour: Tour at the time of the report
+        route: Route
+        route_summary: '{count, plural, one {# stop} other {# stops}} · current step {step}'
+        captured_at: Captured
+        off_catalogue: ship not in the catalogue
+        doors: Cargo doors
+        overridden: custom
+        mode: Planning mode
+        stop_order: Manual stop order
+        done: done
+        estimated: estimated
+        cargo: Cargo hold
+        cargo_summary: '{unplaced} SCU without a spot, {stacked} crates stacked on an earlier delivery'
+        mission: Mission
+        resource: Resource
+        steps: Load → unload step
+        flags: State
+        raw: Raw snapshot (JSON)

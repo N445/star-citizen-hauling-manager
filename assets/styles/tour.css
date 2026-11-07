@@ -447,6 +447,61 @@
     margin-left: 1.5rem;
 }
 
+/* Quantité réelle (SCU) sous chaque ramassage / livraison */
+.tour-page .route-qty {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.15rem 0 0 1.5rem;
+    font-size: 0.8125rem;
+}
+
+.tour-page .route-qty__hint {
+    color: var(--bs-secondary-color);
+}
+
+.tour-page .scu-edit__badge,
+.tour-page .scu-edit__input {
+    box-sizing: border-box;
+    width: 4.5rem;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    line-height: 1.5rem;
+}
+
+.tour-page .scu-edit__badge {
+    border: 1px solid transparent;
+    background: #212529;
+    color: #f8f9fa;
+    cursor: text;
+}
+
+.tour-page .scu-edit__badge:hover,
+.tour-page .scu-edit__badge:focus-visible {
+    background: #343a40;
+}
+
+.tour-page .scu-edit--adjusted .scu-edit__badge {
+    border-color: var(--bs-warning);
+}
+
+.tour-page .scu-edit__input {
+    border: 1px solid var(--bs-primary);
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+
+.tour-page .route-qty__warning {
+    margin: 0.15rem 0 0 1.5rem;
+    color: var(--bs-warning-text-emphasis);
+    font-size: 0.8125rem;
+}
+
 /* :has() gives instant feedback on tick, before the server answers. */
 .tour-page .route-action--done,
 .tour-page .route-action:has(input:checked) {
@@ -788,4 +843,9 @@
         white-space: normal;
         overflow-wrap: anywhere;
     }
+}
+
+.tour-page .scu-edit {
+    display: inline-block;
+    vertical-align: middle;
 }

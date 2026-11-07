@@ -1,7 +1,7 @@
 ENV_FILES := --env-file .env $(if $(wildcard .env.local),--env-file .env.local)
 DC := docker compose $(ENV_FILES)
 
-.PHONY: up down logs sh update ships
+.PHONY: up down logs sh update refresh init migrate ships
 
 up:
 	$(DC) up -d --wait
@@ -15,11 +15,23 @@ logs:
 sh:
 	$(DC) exec php bash
 
-update:
+# Lancé par le CD à chaque déploiement : sans danger à répéter (voir `init`).
+update: refresh init
+
+refresh:
 	$(DC) pull php
 	$(DC) up -d --wait
+
+# Équivalent prod de `make init` : migrations (lieux et ressources inclus) puis vaisseaux. Idempotent :
+# les migrations ne rejouent que les nouvelles, l'import met à jour par slug (aucun doublon) et ne touche
+# ni aux portes ni aux réglages faits dans l'admin. `app:ships:doors` n'est volontairement PAS lancé :
+# il écraserait les portes corrigées à la main.
+init: migrate ships
+
+migrate:
 	$(DC) exec -T php bin/console doctrine:migrations:migrate -n --allow-no-migration
 
-# À planifier en cron : les vaisseaux et leurs grilles viennent de sc-cargo.space, jamais lus en direct.
+# Aussi à planifier en cron : les vaisseaux et leurs grilles viennent de sc-cargo.space, jamais lus en direct.
+# Dans le CD, une source indisponible ne doit pas faire échouer un déploiement déjà en ligne : on avertit seulement.
 ships:
-	$(DC) exec -T php bin/console app:ships:import
+	$(DC) exec -T php bin/console app:ships:import || echo "::warning::Import des vaisseaux échoué (sc-cargo.space injoignable ou format changé) : catalogue inchangé."

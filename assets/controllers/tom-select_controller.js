@@ -15,6 +15,13 @@ export default class extends Controller {
             optgroups: this.optgroupsValue,
             optgroupField: 'optgroup',
             lockOptgroupOrder: true,
+            sortField: [{ field: 'text', direction: 'asc' }],
+            // Tout résultat vaut 1 : sinon Tom Select classe par pertinence (le texte le plus court d'abord) avant l'ordre alphabétique.
+            score: function (search) {
+                const score = this.getScoreFunction(search);
+
+                return (option) => (score(option) > 0 ? 1 : 0);
+            },
             maxItems: this.multipleValue ? null : 1,
             create: true,
             createOnBlur: true,

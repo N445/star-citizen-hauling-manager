@@ -1,0 +1,51 @@
+{% trans_default_domain 'admin' %}
+{# Arbre repliable : <ul role="tree"> à la racine, <ul role="group"> pour chaque niveau. Replis gérés par assets/location-tree.js (aria-expanded sur le <li>). #}
+{% macro tree(locations, open_depth) %}
+    {% import _self as m %}
+    <ul class="loc-group" role="tree" aria-label="{{ 'location.tree'|trans }}">
+        {% for location in locations %}
+            {{ m.node(location, 0, open_depth) }}
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% macro node(location, depth, open_depth) %}
+    {% import _self as m %}
+    {% set kids = location.children %}
+    {% set icon = location.isSystem ? 'fa-globe' : (kids is empty ? 'fa-location-dot' : 'fa-folder') %}
+    <li role="treeitem" class="loc-node" aria-level="{{ depth + 1 }}"{% if kids is not empty %} aria-expanded="{{ depth < open_depth ? 'true' : 'false' }}"{% endif %} data-name="{{ location.name }}">
+        <div class="loc-row">
+            {% if kids is not empty %}
+                <button type="button" class="loc-toggle" aria-label="{{ 'location.tree_toggle'|trans({name: location.name}) }}">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            {% else %}
+                <span class="loc-toggle loc-toggle-empty" aria-hidden="true"></span>
+            {% endif %}
+            <a class="loc-link" href="{{ path('admin_locations_show', {id: location.id}) }}">
+                <i class="fa {{ icon }} loc-icon{{ kids is empty ? ' is-leaf' }}" aria-hidden="true"></i>
+                <span class="loc-name">{{ location.name }}</span>
+            </a>
+            {% if kids is not empty %}
+                <span class="badge badge-secondary loc-count" title="{{ 'location.descendants_count'|trans({count: location.descendants|length}) }}">{{ kids|length }}</span>
+            {% endif %}
+        </div>
+        {% if kids is not empty %}
+            <ul class="loc-group" role="group">
+                {% for kid in kids %}
+                    {{ m.node(kid, depth + 1, open_depth) }}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </li>
+{% endmacro %}
+
+{% macro toolbar(id) %}
+    <div class="loc-toolbar">
+        <label class="visually-hidden" for="{{ id }}-filter">{{ 'location.tree_filter'|trans }}</label>
+        <input type="search" id="{{ id }}-filter" class="form-control loc-filter" data-loc-filter placeholder="{{ 'location.tree_filter_placeholder'|trans }}" autocomplete="off">
+        <button type="button" class="btn btn-secondary" data-loc-expand><i class="fa fa-angles-down" aria-hidden="true"></i> {{ 'location.tree_expand_all'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-loc-collapse><i class="fa fa-angles-up" aria-hidden="true"></i> {{ 'location.tree_collapse_all'|trans }}</button>
+    </div>
+    <p class="text-muted small mb-2" role="status" aria-live="polite" data-loc-status></p>
+{% endmacro %}

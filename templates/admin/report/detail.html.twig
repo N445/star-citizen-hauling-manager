@@ -1,0 +1,133 @@
+{% trans_default_domain 'admin' %}
+{% set report = entity.instance %}
+{% set snapshot = field.value %}
+{% set missions = snapshot.missions ?? [] %}
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="badge badge-secondary">{{ report.category.label|trans({}, 'messages') }}</span>
+                        <span class="badge {{ report.resolved ? 'badge-success' : 'badge-warning' }}">{{ report.status.label|trans({}, 'messages') }}</span>
+                        <span class="text-muted">{{ report.createdAt|date('d/m/Y H:i') }}</span>
+                        <span class="text-muted">· {{ report.author ? report.author.email : 'tour.guest'|trans }}</span>
+                        <span class="text-muted">· {{ report.tour ? report.tour.name : 'report.tour_deleted'|trans }}</span>
+                    </div>
+                    <form method="post" action="{{ path(report.resolved ? 'admin_reports_reopen' : 'admin_reports_resolve', {id: report.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('admin_report_status') }}">
+                        <button type="submit" class="btn {{ report.resolved ? 'btn-secondary' : 'btn-success' }}">{{ (report.resolved ? 'report.reopen' : 'report.resolve')|trans }}</button>
+                    </form>
+                </div>
+                <h2 class="h5 mt-3">{{ 'report.message'|trans }}</h2>
+                <p class="mb-0" style="white-space: pre-wrap">{{ report.message }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xxl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5">{{ 'report.snapshot.tour'|trans }}</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">{{ 'report.snapshot.captured_at'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.capturedAt|date('d/m/Y H:i:s') }} · {{ snapshot.locale }}</dd>
+                    <dt class="col-sm-4">{{ 'tour.ship'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.shipName }}{% if snapshot.tour.ship is null %} <span class="text-muted">({{ 'report.snapshot.off_catalogue'|trans }})</span>{% endif %}</dd>
+                    <dt class="col-sm-4">{{ 'tour.capacity'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.capacity }}</dd>
+                    <dt class="col-sm-4">{{ 'report.snapshot.doors'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.doors|join(', ') }}{% if snapshot.tour.doorsOverridden %} ({{ 'report.snapshot.overridden'|trans }}){% endif %}</dd>
+                    <dt class="col-sm-4">{{ 'tour.start_location'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.startLocation ?? '—' }}</dd>
+                    <dt class="col-sm-4">{{ 'report.snapshot.mode'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.mode }}</dd>
+                    <dt class="col-sm-4">{{ 'report.snapshot.stop_order'|trans }}</dt>
+                    <dd class="col-sm-8">{{ snapshot.tour.stopOrder is null ? '—' : snapshot.tour.stopOrder|join(' → ') }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xxl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5">{{ 'report.snapshot.route'|trans }}</h2>
+                {% if snapshot.route.error %}
+                    <p class="text-danger">{{ snapshot.route.error }}</p>
+                {% else %}
+                    <p class="text-muted">{{ 'report.snapshot.route_summary'|trans({'count': snapshot.route.moveCount, 'step': snapshot.route.currentStep}) }}</p>
+                    <ol class="mb-0">
+                        {% for stop in snapshot.route.stops %}
+                            <li class="{{ stop.done ? 'text-muted' }}">
+                                <strong>{{ stop.location }}</strong>{% if stop.load is not null %} <small class="text-muted">({{ stop.load }}/{{ snapshot.tour.capacity }} SCU)</small>{% endif %}
+                                {% for pickup in stop.pickups %}<div>↑ {{ pickup.done ? '✓' : '·' }} #{{ pickup.mission }}</div>{% endfor %}
+                                {% for drop in stop.deliveries %}<div>↓ {{ drop.done ? '✓' : '·' }} {{ drop.quantity }} SCU {{ drop.resource }} (#{{ drop.mission }})</div>{% endfor %}
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5">{{ 'tour.missions'|trans }} <span class="text-muted fw-normal">({{ missions|length }})</span></h2>
+                <div class="row g-3">
+                    {% for mission in missions %}
+                        <div class="col-12 col-xxl-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="d-flex justify-content-between"><strong>#{{ mission.id }} {{ mission.name ?? '—' }}</strong><span>{{ mission.reward|number_format(0, ',', ' ') }} aUEC</span></div>
+                                <div class="text-muted small">{{ mission.type }} · {{ mission.done ? 'report.snapshot.done'|trans : '…' }}</div>
+                                <div>↑ {% for location in mission.pickups %}{{ mission.pickedUpAt is iterable and location in mission.pickedUpAt ? '✓' : '·' }} {{ location }}{% if mission.pickupQuantities[location] is defined %} ({{ mission.pickupQuantities[location] }} SCU){% endif %}{{ not loop.last ? ' · ' }}{% endfor %}</div>
+                                <ul class="list-unstyled mb-0">
+                                    {% for delivery in mission.deliveries %}
+                                        <li>↓ {{ delivery.delivered ? '✓' : '·' }} {{ delivery.actualQuantity ?? delivery.quantity }} SCU {{ delivery.resource }} → {{ delivery.dropoff }}{% if delivery.actualQuantity is not null %} <small class="text-muted">({{ 'report.snapshot.estimated'|trans }} {{ delivery.quantity }})</small>{% endif %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5">{{ 'report.snapshot.cargo'|trans }} <span class="text-muted fw-normal">({{ snapshot.cargo.crates|length }})</span></h2>
+                <p class="text-muted">{{ 'report.snapshot.cargo_summary'|trans({'unplaced': snapshot.cargo.unplaced, 'stacked': snapshot.cargo.stacked}) }}</p>
+                {% if snapshot.cargo.crates is not empty %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>{{ 'report.snapshot.mission'|trans }}</th><th>{{ 'report.snapshot.resource'|trans }}</th><th>SCU</th><th>x · y · z</th><th>L × l × h</th><th>{{ 'report.snapshot.steps'|trans }}</th><th>{{ 'report.snapshot.flags'|trans }}</th></tr></thead>
+                            <tbody>
+                                {% for crate in snapshot.cargo.crates %}
+                                    <tr>
+                                        <td>#{{ crate.mission }}</td>
+                                        <td>{{ crate.resource }}</td>
+                                        <td>{{ crate.size }}</td>
+                                        <td>{{ crate.x }} · {{ crate.y }} · {{ crate.z }}</td>
+                                        <td>{{ crate.width }} × {{ crate.length }} × {{ crate.height }}</td>
+                                        <td>{{ crate.pickupStep }} → {{ crate.dropStep ?? '—' }}</td>
+                                        <td>{{ [crate.manual ? 'manual', crate.placed ? 'placed', crate.stacked ? 'stacked', crate.phantom ? 'phantom']|filter(flag => flag)|join(', ') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <details>
+            <summary>{{ 'report.snapshot.raw'|trans }}</summary>
+            <pre class="mt-2"><code>{{ snapshot|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</code></pre>
+        </details>
+    </div>
+</div>

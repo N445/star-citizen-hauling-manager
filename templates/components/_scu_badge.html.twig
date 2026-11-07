@@ -1,0 +1,11 @@
+{# Badge SCU discret : un clic le transforme en champ de même taille (Entrée/sortie du champ = enregistrer, Échap = annuler). #}
+<span class="scu-edit {{ adjusted|default(false) ? 'scu-edit--adjusted' }}" data-controller="quantity"
+      data-quantity-action-value="{{ action }}" data-quantity-kind-value="{{ kind }}"
+      {% if delivery is defined %}data-quantity-delivery-value="{{ delivery }}"{% endif %}
+      {% if mission is defined %}data-quantity-mission-value="{{ mission }}" data-quantity-location-value="{{ location }}"{% endif %}>
+    <button type="button" class="scu-edit__badge" data-quantity-target="badge" data-action="quantity#edit" title="{{ title|default('')|e('html_attr') }}"
+            aria-label="{{ 'quantity.edit'|trans }}">{{ value is not null and value != '' ? value : (placeholder|default('—')) }} SCU</button>
+    <input type="number" inputmode="numeric" min="0" max="{{ constant('App\\Service\\Tour\\QuantityEditor::MAXIMUM') }}" step="1" hidden
+           class="scu-edit__input" data-quantity-target="input" value="{{ value }}" placeholder="{{ placeholder|default('') }}" aria-label="SCU"
+           data-action="keydown->quantity#key blur->quantity#save">
+</span>

@@ -4,6 +4,42 @@
         <span class="step-badge" aria-hidden="true">3</span>
         <span>{{ 'route.title'|trans }}</span>
         <span class="spinner-border spinner-border-sm text-primary ms-auto route-panel-spinner" role="status"><span class="visually-hidden">{{ 'route.loading'|trans }}</span></span>
+        <button type="button" class="btn btn-sm btn-outline-secondary route-report-open" data-bs-toggle="modal" data-bs-target="#route-report-modal-{{ tour.id }}"
+                data-track="route-report-open" title="{{ 'report.open'|trans }}" aria-label="{{ 'report.open'|trans }}">{{ icons.icon('flag') }}</button>
+    </div>
+    <div data-live-ignore data-controller="route-report">
+        <div class="modal fade route-report" id="route-report-modal-{{ tour.id }}" tabindex="-1" aria-labelledby="route-report-title-{{ tour.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form class="modal-content" novalidate>
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="route-report-title-{{ tour.id }}">{{ 'report.title'|trans }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'action.close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-body-secondary">{{ 'report.intro'|trans }}</p>
+                        <label class="form-label" for="route-report-category-{{ tour.id }}">{{ 'report.category.label'|trans }}</label>
+                        <select class="form-select mb-3" id="route-report-category-{{ tour.id }}" data-report="category">
+                            {% for category in enum_cases('App\\Entity\\ReportCategory') %}
+                                <option value="{{ category.value }}">{{ category.label|trans }}</option>
+                            {% endfor %}
+                        </select>
+                        {% set maxLength = constant('App\\Service\\Report\\RouteReporter::MAX_MESSAGE_LENGTH') %}
+                        <label class="form-label" for="route-report-message-{{ tour.id }}">{{ 'report.message.label'|trans }}</label>
+                        <textarea class="form-control" id="route-report-message-{{ tour.id }}" rows="5" maxlength="{{ maxLength }}" required placeholder="{{ 'report.message.placeholder'|trans }}"
+                                  data-report="message"></textarea>
+                        <div class="d-flex justify-content-between small text-body-secondary mt-1">
+                            <span>{{ 'report.snapshot_hint'|trans }}</span>
+                            <span><span data-report="counter">0</span>/{{ maxLength }}</span>
+                        </div>
+                        <div class="invalid-feedback d-block" data-report="error" role="alert" hidden>{{ 'report.error.empty'|trans }}</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'action.cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-report="submit">{{ 'report.send'|trans }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <div class="card-body route-panel-body" data-loading="delay(150)|addClass(is-busy)">
         {% set route = computed.route %}
