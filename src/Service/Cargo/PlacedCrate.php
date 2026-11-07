@@ -17,20 +17,24 @@ final readonly class PlacedCrate
         public int $pickupStep,
         public ?int $dropStep,
         public bool $stackedOnEarlierDelivery = false,
+        public bool $placed = false,
+        public bool $manual = false,
     ) {
     }
 
     public function withStacking(bool $stackedOnEarlierDelivery): self
     {
-        return new self($this->id, $this->delivery, $this->size, $this->spot, $this->pickupLocation, $this->pickupStep, $this->dropStep, $stackedOnEarlierDelivery);
+        return new self($this->id, $this->delivery, $this->size, $this->spot, $this->pickupLocation, $this->pickupStep, $this->dropStep, $stackedOnEarlierDelivery, $this->placed, $this->manual);
     }
 
     /**
-     * @return array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int}
+     * @return array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: true, placed?: true}
      */
     public function toPlacement(): array
     {
         return [
+            ...($this->manual ? ['manual' => true] : []),
+            ...($this->placed ? ['placed' => true] : []),
             'delivery' => $this->delivery->id(),
             'size' => $this->size,
             'x' => $this->spot->x(),

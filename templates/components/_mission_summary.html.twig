@@ -26,7 +26,7 @@
                 {% for delivery in mission.deliveries %}
                     <li class="mission-path-line mission-path-line--drop {{ delivery.isDelivered ? 'is-done' }}">
                         <span class="visually-hidden">{{ 'route.legend.drop'|trans }}</span>
-                        {{ 'mission.delivery_line'|trans({dropoff: delivery.dropoff, quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
+                        {{ 'mission.delivery_line'|trans({dropoff: delivery.dropoff, quantity: delivery.effectiveQuantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
                     </li>
                 {% endfor %}
             </ul>

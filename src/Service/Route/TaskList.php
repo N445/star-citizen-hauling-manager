@@ -51,7 +51,7 @@ final class TaskList
             $this->index($task, $taskIndex);
         }
 
-        $this->totalsByMission = array_map(static fn (Mission $mission): int => $mission->totalQuantity(), $missions);
+        $this->totalsByMission = array_map(static fn (Mission $mission): int => $mission->effectiveQuantity(), $missions);
     }
 
     public static function fromTour(Tour $tour): self
@@ -185,7 +185,7 @@ final class TaskList
 
         $this->deliveriesByMission[$task->missionIndex] = ($this->deliveriesByMission[$task->missionIndex] ?? 0) | $bit;
         $this->deliveryIndexesByLocation[$task->location][] = $taskIndex;
-        $this->deliveredQuantitiesByMission[$task->missionIndex][$taskIndex] = $task->delivery->quantity();
+        $this->deliveredQuantitiesByMission[$task->missionIndex][$taskIndex] = $task->delivery->effectiveQuantity();
     }
 
     private function indexPickup(Task $task, int $bit): void
@@ -237,10 +237,10 @@ final class TaskList
 
     private function assertFits(Mission $mission): void
     {
-        if ($mission->totalQuantity() <= $this->capacity) {
+        if ($mission->effectiveQuantity() <= $this->capacity) {
             return;
         }
 
-        throw new RouteException('route.error.mission_exceeds_capacity', ['quantity' => $mission->totalQuantity(), 'capacity' => $this->capacity]);
+        throw new RouteException('route.error.mission_exceeds_capacity', ['quantity' => $mission->effectiveQuantity(), 'capacity' => $this->capacity]);
     }
 }

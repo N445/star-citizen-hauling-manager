@@ -228,6 +228,6 @@ class Tour
 
     public function totalQuantity(): int
     {
-        return array_sum($this->missions->map(static fn (Mission $mission): int => $mission->totalQuantity())->toArray());
+        return array_sum($this->missions->map(static fn (Mission $mission): int => $mission->effectiveQuantity())->toArray());
     }
 }

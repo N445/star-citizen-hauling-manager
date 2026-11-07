@@ -37,6 +37,6 @@ final class ShipRepository extends ServiceEntityRepository
      */
     public function findAllSorted(): array
     {
-        return $this->findBy([], ['manufacturer' => 'ASC', 'name' => 'ASC']);
+        return $this->findBy([], ['name' => 'ASC', 'manufacturer' => 'ASC']);
     }
 }

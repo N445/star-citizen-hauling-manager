@@ -101,7 +101,7 @@ final class RouteTrace
     {
         $pending = array_filter($mission->deliveries()->getValues(), fn (Delivery $delivery): bool => $this->deliveryStepOf($delivery) > $step);
 
-        return array_sum(array_map(static fn (Delivery $delivery): int => $delivery->quantity(), $pending));
+        return array_sum(array_map(static fn (Delivery $delivery): int => $delivery->effectiveQuantity(), $pending));
     }
 
     /**

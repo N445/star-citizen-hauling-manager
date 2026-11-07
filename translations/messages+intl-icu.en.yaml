@@ -123,7 +123,7 @@ mission:
 cargo:
     title: Cargo grid
     scale: 1 cell = 1 SCU
-    controls: 'Drag: rotate · right-drag: pan · wheel: zoom'
+    controls: 'Drag: rotate · right-drag: pan · wheel: zoom · click a crate: select and lock the highlight · drag a crate: move it (Shift: no swap)'
     controls_touch: 'Swipe sideways: rotate · two fingers: zoom and tilt · swipe up/down: scroll the page'
     no_grid: 'Pick a ship from the catalog to see its cargo grid.'
     empty_title: No cargo grid yet
@@ -140,6 +140,31 @@ cargo:
     warning:
         stacked: 'Not enough room: {count, plural, one {# crate has} other {# crates have}} to sit on top of a crate delivered earlier.'
         unplaced: '{quantity} SCU find no room in the cargo hold at some point of the route.'
+    edit:
+        toolbar: Crate placement
+        actions: Selected crate
+        undo: Undo
+        undo_hint: 'Undo the last move (Ctrl+Z)'
+        reset_all: Reset auto placement
+        reset_all_hint: 'Erase every manual placement of the tour and go back to the automatic one'
+        reset_mission: This mission
+        reset_mission_hint: 'Erase the manual placement of the selected crate''s mission'
+        rotate: Rotate
+        rotate_hint: 'Turn the crate by a quarter turn (R)'
+        placed: Placed
+        placed_hint: 'This crate is well placed: it stays where it is until you untick it (Enter or V)'
+        placed_count: placed
+        placed_count_hint: 'Crates marked as well placed'
+        locked: Highlight locked
+        error:
+            outside: 'Outside the cargo grid.'
+            shape: 'This crate cannot take that shape.'
+            size: 'This grid does not accept crates of that size.'
+            overlap: 'Another crate is already there.'
+            unsupported: 'The crate would not be supported: the floor or crates must cover its whole footprint.'
+            supports: 'Another crate would lose its support.'
+            swap: 'Only two different crates of the same size can be swapped.'
+            placed: 'This crate is marked as placed: untick it first to move it.'
     crate:
         label: '{size} SCU {resource} · {mission} → {dropoff}'
         label_stacked: '{size} SCU {resource} · {mission} → {dropoff} — stacked on a crate delivered earlier, no room left'
@@ -173,7 +198,7 @@ route:
         current: Next stop
         done: Stop done
         load: Cargo on board after this stop
-        drop: 'Drop off {quantity} SCU'
+        drop: Drop off
         pickup: Pick up
         split_pickup: 'Quantity split across {count} pickup locations.'
     error:
@@ -181,3 +206,42 @@ route:
         mission_exceeds_capacity: 'A mission carries {quantity} SCU, more than the ship capacity ({capacity} SCU).'
         no_route: 'No route possible: the ship capacity cannot chain these missions.'
         too_many_combinations: 'Too many combinations to explore: reduce the number of missions in the tour.'
+
+quantity:
+    pickup: Picked up
+    drop: Dropped
+    estimate: 'estimated {quantity}'
+    remaining: 'left to split: {remaining} of {total}'
+    warning:
+        over: 'Pickups add up to {sum} SCU, more than the {total} SCU of the mission.'
+        under: 'Pickups add up to {sum} SCU, less than the {total} SCU of the mission.'
+        drops: 'You picked up {picked} SCU but the drop-offs add up to {drops} SCU.'
+    error:
+        range: 'Enter a whole number of SCU between 0 and {maximum}.'
+        exceeds_capacity: 'This mission would carry {quantity} SCU, more than the ship capacity ({capacity} SCU).'
+
+report:
+    open: Report a problem with this route
+    title: Report a problem
+    intro: Tell us what looks wrong with this route. A snapshot of your tour (missions, route, cargo hold) is saved with your message so we can reproduce it.
+    category:
+        label: What is it about?
+        route: Route (order of the stops)
+        cargo: Cargo hold (crates)
+        quantities: Quantities
+        other: Other
+    message:
+        label: What is wrong?
+        placeholder: Describe what you expected and what you got instead.
+    snapshot_hint: Your tour as it is now is attached.
+    send: Send report
+    sent: Thank you, your report was sent.
+    status:
+        open: Open
+        resolved: Resolved
+    error:
+        empty: Please explain what is wrong.
+        too_long: 'Your message is too long (maximum {maximum} characters).'
+        too_many: 'Too many reports in the last hour (maximum {maximum}). Please try again later.'
+        too_soon: 'Please wait {seconds} seconds before sending another report.'
+        anonymous: 'Your session could not be identified: reload the page and try again.'

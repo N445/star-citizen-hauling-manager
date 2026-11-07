@@ -74,7 +74,7 @@ final readonly class ManualOrderInvariants
             return [] === $inProgress;
         }
 
-        return $this->trace->loadAfter($step, $this->missions) + $mission->totalQuantity() <= $this->tour->capacity();
+        return $this->trace->loadAfter($step, $this->missions) + $mission->effectiveQuantity() <= $this->tour->capacity();
     }
 
     private function isFullyPickedUpAfter(Mission $mission, int $step): bool

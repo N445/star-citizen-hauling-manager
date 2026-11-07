@@ -31,9 +31,13 @@ class Mission
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $finishedAt = null;
 
-    /** @var list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int}>|null emplacements figés au ramassage */
+    /** @var list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: bool, placed?: bool}>|null emplacements figés (au ramassage, ou posés à la main) */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $cargoPlacement = null;
+
+    /** @var array<string, int> quantité réellement ramassée par lieu, saisie en route (absent = pas saisie) */
+    #[ORM\Column(type: Types::JSON)]
+    private array $pickupQuantities = [];
 
     /** @var Collection<int, Delivery> */
     #[ORM\OneToMany(targetEntity: Delivery::class, mappedBy: 'mission', cascade: ['persist'], orphanRemoval: true)]
@@ -71,6 +75,7 @@ class Mission
         $this->pickups = $pickups;
         $this->pickedUpAt = array_values(array_intersect($this->pickedUpAt, $pickups));
         $this->cargoPlacement = null;
+        $this->pickupQuantities = [];
         $this->finishedAt = null;
         $this->replaceDeliveries($deliveries);
     }
@@ -107,7 +112,7 @@ class Mission
     {
         if ($this->isPickedUpAt($location)) {
             $this->pickedUpAt = array_values(array_diff($this->pickedUpAt, [$location]));
-            $this->cargoPlacement = [] === $this->pickedUpAt ? null : $this->cargoPlacement;
+            $this->cargoPlacement = [] === $this->pickedUpAt && !$this->hasManualCargo() ? null : $this->cargoPlacement;
 
             return;
         }
@@ -116,15 +121,30 @@ class Mission
     }
 
     /**
-     * @param list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int}> $placement
+     * @param list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: bool, placed?: bool}> $placement
      */
     public function freezeCargo(array $placement): void
     {
         $this->cargoPlacement = $placement;
     }
 
+    public function clearCargo(): void
+    {
+        $this->cargoPlacement = null;
+    }
+
+    public function hasManualCargo(): bool
+    {
+        return array_any($this->cargoPlacement ?? [], static fn (array $crate): bool => $crate['manual'] ?? false);
+    }
+
+    public function hasPickedUpAnything(): bool
+    {
+        return [] !== $this->pickedUpAt;
+    }
+
     /**
-     * @return list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int}>|null
+     * @return list<array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: bool, placed?: bool}>|null
      */
     public function frozenCargo(): ?array
     {
@@ -197,6 +217,51 @@ class Mission
     public function totalQuantity(): int
     {
         return array_sum($this->deliveries->map(static fn (Delivery $delivery): int => $delivery->quantity())->toArray());
+    }
+
+    /**
+     * Total réel : les quantités saisies en route remplacent l'estimation.
+     */
+    public function effectiveQuantity(): int
+    {
+        return array_sum($this->deliveries->map(static fn (Delivery $delivery): int => $delivery->effectiveQuantity())->toArray());
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function pickupQuantities(): array
+    {
+        return $this->pickupQuantities;
+    }
+
+    public function pickupQuantitySum(): int
+    {
+        return array_sum(array_intersect_key($this->pickupQuantities, array_flip($this->pickups)));
+    }
+
+    public function pickupQuantity(string $location): ?int
+    {
+        return $this->pickupQuantities[$location] ?? null;
+    }
+
+    public function recordPickupQuantity(string $location, ?int $quantity): void
+    {
+        if (null === $quantity) {
+            unset($this->pickupQuantities[$location]);
+
+            return;
+        }
+
+        $this->pickupQuantities[$location] = $quantity;
+    }
+
+    /**
+     * Les caisses déjà placées ne correspondent plus : on repart du calcul automatique.
+     */
+    public function quantitiesChanged(): void
+    {
+        $this->cargoPlacement = null;
     }
 
     /**

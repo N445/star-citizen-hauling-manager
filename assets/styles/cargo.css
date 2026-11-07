@@ -300,3 +300,102 @@
         max-width: 12rem;
     }
 }
+
+/* Placement manuel : barre d'outils, barre flottante de la caisse sélectionnée, avis */
+.cargo-stage:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
+}
+
+.cargo-stage canvas.is-dragging {
+    cursor: grabbing;
+}
+
+.cargo-toolbar {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    right: 3rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    pointer-events: none;
+}
+
+.cargo-toolbar > * {
+    pointer-events: auto;
+}
+
+.cargo-tool,
+.cargo-action,
+.cargo-badge {
+    border: 1px solid var(--bs-border-color);
+    background: color-mix(in srgb, var(--bs-body-bg) 82%, transparent);
+    color: var(--bs-body-color);
+    backdrop-filter: blur(4px);
+    font-size: 0.75rem;
+}
+
+.cargo-badge {
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--bs-border-radius);
+    color: var(--bs-secondary-color);
+}
+
+.cargo-tool:disabled,
+.cargo-action:disabled {
+    opacity: 0.45;
+}
+
+.cargo-tool--lock {
+    border-color: #4dabf7;
+}
+
+.cargo-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background: color-mix(in srgb, var(--bs-body-bg) 90%, transparent);
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.cargo-actions[hidden],
+.cargo-toolbar [hidden],
+.cargo-notice[hidden] {
+    display: none;
+}
+
+.cargo-action--placed[aria-pressed="true"] {
+    border-color: var(--cargo-pickup);
+    background: color-mix(in srgb, var(--cargo-pickup) 30%, var(--bs-body-bg));
+    font-weight: 600;
+}
+
+.cargo-notice {
+    position: absolute;
+    left: 50%;
+    bottom: 2.2rem;
+    z-index: 3;
+    max-width: calc(100% - 1.5rem);
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    transform: translateX(-50%);
+    border-radius: var(--bs-border-radius);
+    background: color-mix(in srgb, var(--bs-body-bg) 92%, transparent);
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.cargo-notice[data-tone="error"] {
+    border-color: var(--cargo-stacked);
+}

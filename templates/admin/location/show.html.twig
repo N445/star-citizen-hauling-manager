@@ -1,0 +1,112 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% trans_default_domain 'admin' %}
+{% import 'admin/location/_tree.html.twig' as tree %}
+
+{% block content_title location.name %}
+
+{% block main %}
+    {% set kids = location.children %}
+    {% set kind = location.isSystem ? 'system' : (kids is empty ? 'leaf' : 'folder') %}
+    <div class="loc-page">
+        <nav aria-label="{{ 'location.breadcrumb'|trans }}">
+            <ol class="breadcrumb loc-breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('admin_locations_index') }}"><i class="fa fa-sitemap" aria-hidden="true"></i> {{ 'location.all_systems'|trans }}</a></li>
+                {% for step in path %}
+                    {% if loop.last %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ step.name }}</li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="{{ path('admin_locations_show', {id: step.id}) }}">{{ step.name }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12 col-xl-5">
+                <section class="loc-card" aria-labelledby="loc-card-title">
+                    <h2 id="loc-card-title" class="loc-card-title">{{ location.name }}</h2>
+                    <dl class="loc-facts">
+                        <dt>{{ 'location.type'|trans }}</dt>
+                        <dd>{{ ('location.kind.' ~ kind)|trans }}</dd>
+                        <dt>{{ 'location.full_path'|trans }}</dt>
+                        <dd>{{ path|map(step => step.name)|join(' › ') }}</dd>
+                        <dt>{{ 'location.children'|trans }}</dt>
+                        <dd>{{ 'location.children_count'|trans({count: kids|length}) }}</dd>
+                        <dt>{{ 'location.descendants'|trans }}</dt>
+                        <dd>{{ 'location.descendants_count'|trans({count: descendantCount}) }}</dd>
+                    </dl>
+
+                    <div class="loc-actions">
+                        <details class="loc-action">
+                            <summary class="btn btn-secondary"><i class="fa fa-pen" aria-hidden="true"></i> {{ 'location.rename'|trans }}</summary>
+                            <form method="post" action="{{ path('admin_locations_rename', {id: location.id}) }}" class="loc-form">
+                                <input type="hidden" name="_token" value="{{ csrf_token('admin_location') }}">
+                                <label class="form-label" for="loc-rename">{{ 'location.name'|trans }}</label>
+                                <input type="text" id="loc-rename" name="name" class="form-control mb-2" value="{{ location.name }}" maxlength="120" required>
+                                <button type="submit" class="btn btn-primary">{{ 'location.rename_button'|trans }}</button>
+                            </form>
+                        </details>
+
+                        <details class="loc-action">
+                            <summary class="btn btn-secondary"><i class="fa fa-up-down-left-right" aria-hidden="true"></i> {{ 'location.move'|trans }}</summary>
+                            <form method="post" action="{{ path('admin_locations_move', {id: location.id}) }}" class="loc-form">
+                                <input type="hidden" name="_token" value="{{ csrf_token('admin_location') }}">
+                                <label class="form-label" for="loc-move">{{ 'location.move_label'|trans }}</label>
+                                <select id="loc-move" name="parent" class="form-select mb-2" aria-describedby="loc-move-help">
+                                    <option value=""{{ location.isSystem ? ' selected' }}>{{ 'location.move_root'|trans }}</option>
+                                    {% for choice in parents %}
+                                        <option value="{{ choice.id }}"{{ location.parent and location.parent.id == choice.id ? ' selected' }}>{{ choice.label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="loc-move-help" class="form-text mb-2">{{ 'location.move_help'|trans }}</div>
+                                <button type="submit" class="btn btn-primary">{{ 'location.move_button'|trans }}</button>
+                            </form>
+                        </details>
+
+                        <details class="loc-action">
+                            <summary class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{ 'location.delete'|trans }}</summary>
+                            <form method="post" action="{{ path('admin_locations_delete', {id: location.id}) }}" class="loc-form">
+                                <input type="hidden" name="_token" value="{{ csrf_token('admin_location') }}">
+                                <p class="mb-2" role="alert">{{ 'location.delete_warning'|trans({name: location.name, count: descendantCount}) }}</p>
+                                <button type="submit" class="btn btn-danger">{{ 'location.delete_button'|trans }}</button>
+                            </form>
+                        </details>
+                    </div>
+                </section>
+
+                <section class="loc-card" aria-labelledby="loc-add-title">
+                    <h2 id="loc-add-title" class="loc-card-title">{{ 'location.add_title'|trans }}</h2>
+                    {{ include('admin/location/_add_form.html.twig', {parent: location, draft: draft}) }}
+                </section>
+            </div>
+
+            <div class="col-12 col-xl-7">
+                <section class="loc-card" data-location-tree aria-labelledby="loc-tree-title">
+                    <h2 id="loc-tree-title" class="loc-card-title">{{ 'location.tree'|trans }}</h2>
+                    {% if kids is empty %}
+                        <p class="text-muted mb-0">{{ 'location.tree_empty'|trans }}</p>
+                    {% else %}
+                        {{ tree.toolbar('show') }}
+                        {{ tree.tree(kids, 1) }}
+                    {% endif %}
+                </section>
+
+                <section class="loc-card" aria-labelledby="loc-children-title">
+                    <h2 id="loc-children-title" class="loc-card-title">{{ 'location.direct_children'|trans }} <span class="text-muted fw-normal">({{ kids|length }})</span></h2>
+                    {% if kids is empty %}
+                        <p class="text-muted mb-0">{{ 'location.tree_empty'|trans }}</p>
+                    {% else %}
+                        <ul class="loc-children">
+                            {% for kid in kids %}
+                                <li>
+                                    <a href="{{ path('admin_locations_show', {id: kid.id}) }}"><i class="fa {{ kid.isLeaf ? 'fa-location-dot' : 'fa-folder' }}" aria-hidden="true"></i> {{ kid.name }}</a>
+                                    <small class="text-muted">{{ kid.isLeaf ? ('location.kind.leaf'|trans) : ('location.children_count'|trans({count: kid.children|length})) }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </section>
+            </div>
+        </div>
+    </div>
+{% endblock %}

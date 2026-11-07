@@ -18,6 +18,12 @@ final class LocationRepository extends ServiceEntityRepository
         parent::__construct($registry, Location::class);
     }
 
+    /** @return list<Location> */
+    public function findSystems(): array
+    {
+        return $this->findBy(['parent' => null], ['name' => 'ASC']);
+    }
+
     /**
      * Tout l'arbre en une requête : les parents et enfants sont ensuite résolus en mémoire.
      *

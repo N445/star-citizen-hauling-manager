@@ -31,6 +31,23 @@ final readonly class CargoPlan
         return array_values(array_map(static fn (PlacedCrate $crate): array => $crate->toPlacement(), $crates));
     }
 
+    /**
+     * Rang de la caisse parmi celles de sa mission : c'est ainsi que l'interface la désigne.
+     */
+    public function indexInMission(PlacedCrate $target): int
+    {
+        $missionCrates = array_values(array_filter($this->crates, static fn (PlacedCrate $crate): bool => $crate->delivery->mission()->id() === $target->delivery->mission()->id()));
+
+        return (int) array_search($target, $missionCrates, true);
+    }
+
+    public function crateAt(int $missionId, int $index): ?PlacedCrate
+    {
+        $missionCrates = array_values(array_filter($this->crates, static fn (PlacedCrate $crate): bool => $crate->delivery->mission()->id() === $missionId));
+
+        return $missionCrates[$index] ?? null;
+    }
+
     public function stackedCount(): int
     {
         return \count(array_filter($this->crates, static fn (PlacedCrate $crate): bool => $crate->stackedOnEarlierDelivery));

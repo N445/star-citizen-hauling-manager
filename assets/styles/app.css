@@ -804,6 +804,26 @@ html:not([data-theme-choice]) .hm-theme-icon--auto {
     box-shadow: 0 0 0 1px var(--hm-accent), 0 4px 14px rgba(var(--hm-accent-rgb), 0.18);
 }
 
+.is-highlight-locked {
+    position: relative;
+    outline-style: dashed;
+    cursor: pointer;
+}
+
+.is-highlight-locked::after {
+    content: "F512";
+    position: absolute;
+    top: 0;
+    right: 0.25rem;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.commodity-badge.is-highlight-locked::after {
+    content: none;
+}
+
 .is-highlighted {
     outline: 2px solid var(--hm-accent);
     outline-offset: 1px;

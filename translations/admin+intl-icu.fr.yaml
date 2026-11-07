@@ -4,6 +4,7 @@ menu:
     users: Utilisateurs
     planning: Planification
     tours: Tournées
+    reports: Signalements de route
     missions: Missions
     catalog: Catalogue
     ships: Vaisseaux
@@ -74,15 +75,94 @@ commodity:
     color: Couleur
 
 location:
+    title: Lieux
+    root_title: Arborescence des lieux
+    root_intro: Les systèmes et tout ce qu'ils contiennent. Ouvrez un lieu pour le gérer.
     system: Système
     systems: Systèmes
-    singular: Lieu
-    plural: Lieux
+    kind:
+        system: Système
+        folder: Lieu avec sous-lieux
+        leaf: Lieu feuille (proposé dans les suggestions du site)
     name: Nom
+    full_path: Chemin complet
+    type: Type
     children: Sous-lieux
+    descendants: Descendants
+    children_count: '{count, plural, =0 {aucun sous-lieu} one {# sous-lieu} other {# sous-lieux}}'
+    descendants_count: '{count, plural, =0 {rien en dessous} one {# lieu en dessous} other {# lieux en dessous}}'
+    total_count: '{count, plural, =0 {Aucun lieu pour l''instant} one {# lieu au total} other {# lieux au total}}'
     open: Ouvrir
+    breadcrumb: Fil d'Ariane
+    all_systems: Tous les systèmes
+    tree: Arborescence
+    tree_empty: Aucun lieu ici pour l'instant.
+    tree_toggle: Déplier ou replier {name}
+    tree_filter: Filtrer l'arbre
+    tree_filter_placeholder: Chercher un lieu…
+    tree_expand_all: Tout déplier
+    tree_collapse_all: Tout replier
+    tree_matches: '{count, plural, =0 {Aucun résultat} one {# résultat} other {# résultats}}'
+    direct_children: Sous-lieux directs
+    add_title_root: Ajouter un système
+    add_title: Ajouter un lieu ici
+    add_help: Un nom par ligne pour en ajouter plusieurs d'un coup. Les noms doivent être uniques parmi les frères.
+    add_label: Noms
+    add_placeholder: "Lorville\nArea 18\nNew Babbage"
+    add_button: Ajouter
     add_system: Ajouter un système
-    add_child: Ajouter un sous-lieu
-    add: Ajouter un lieu
-    new_system: Nouveau système
-    new_in: 'Nouveau lieu dans {parent}'
+    rename: Renommer
+    rename_button: Renommer
+    move: Déplacer
+    move_label: Nouveau parent
+    move_root: Aucun parent (en faire un système)
+    move_button: Déplacer
+    move_help: Les descendants suivent. Un lieu ne peut pas aller sous lui-même ni sous l'un de ses descendants.
+    delete: Supprimer
+    delete_warning: 'Supprimer définitivement « {name} » ? {count, plural, =0 {Aucun autre lieu ne sera supprimé.} one {# sous-lieu sera supprimé avec lui.} other {# sous-lieux seront supprimés avec lui.}}'
+    delete_button: Oui, supprimer
+    error:
+        empty: Saisissez au moins un nom.
+        too_long: 'Le nom « {name} » est trop long ({max} caractères maximum).'
+        duplicate: 'Un lieu nommé « {name} » existe déjà ici.'
+        cycle: 'Impossible de déplacer « {name} » sous « {parent} » : c''est l''un de ses descendants.'
+    flash:
+        added: '{count, plural, one {# lieu ajouté.} other {# lieux ajoutés.}}'
+        renamed: 'Renommé en « {name} ».'
+        moved: 'Déplacé : {path}'
+        deleted: '« {name} » supprimé ({count, plural, =0 {aucun sous-lieu supprimé avec lui} one {# sous-lieu supprimé avec lui} other {# sous-lieux supprimés avec lui}}).'
+
+report:
+    singular: Signalement
+    plural: Signalements de route
+    category: Catégorie
+    status: Statut
+    message: Message
+    author: Auteur
+    tour: Tournée
+    tour_deleted: tournée supprimée
+    created_at: Signalé le
+    resolve: Marquer comme résolu
+    reopen: Rouvrir
+    flash:
+        resolved: Signalement marqué comme résolu.
+        reopened: Signalement rouvert.
+    snapshot:
+        tour: Tournée au moment du signalement
+        route: Parcours
+        route_summary: '{count, plural, one {# arrêt} other {# arrêts}} · étape courante {step}'
+        captured_at: Capturé
+        off_catalogue: vaisseau hors catalogue
+        doors: Portes cargo
+        overridden: personnalisées
+        mode: Mode de calcul
+        stop_order: Ordre manuel des arrêts
+        done: terminée
+        estimated: estimé
+        cargo: Soute
+        cargo_summary: '{unplaced} SCU sans emplacement, {stacked} caisses empilées sur une livraison antérieure'
+        mission: Mission
+        resource: Ressource
+        steps: Étape de chargement → déchargement
+        flags: État
+        raw: Instantané brut (JSON)

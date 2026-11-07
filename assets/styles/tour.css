@@ -447,6 +447,39 @@
     margin-left: 1.5rem;
 }
 
+/* Quantité réelle (SCU) sous chaque ramassage / livraison */
+.tour-page .route-qty {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.15rem 0 0 1.5rem;
+    font-size: 0.8125rem;
+}
+
+.tour-page .route-qty__label,
+.tour-page .route-qty__unit,
+.tour-page .route-qty__hint {
+    color: var(--bs-secondary-color);
+}
+
+.tour-page .route-qty__input {
+    width: 5.25rem;
+    min-height: 2rem;
+    padding: 0.1rem 0.4rem;
+    text-align: end;
+}
+
+.tour-page .route-qty--adjusted .route-qty__input {
+    border-color: var(--bs-warning);
+}
+
+.tour-page .route-qty__warning {
+    margin: 0.15rem 0 0 1.5rem;
+    color: var(--bs-warning-text-emphasis);
+    font-size: 0.8125rem;
+}
+
 /* :has() gives instant feedback on tick, before the server answers. */
 .tour-page .route-action--done,
 .tour-page .route-action:has(input:checked) {

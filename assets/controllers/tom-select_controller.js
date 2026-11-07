@@ -15,6 +15,7 @@ export default class extends Controller {
             optgroups: this.optgroupsValue,
             optgroupField: 'optgroup',
             lockOptgroupOrder: true,
+            sortField: [{ field: 'text', direction: 'asc' }],
             maxItems: this.multipleValue ? null : 1,
             create: true,
             createOnBlur: true,

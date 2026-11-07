@@ -121,8 +121,8 @@ final readonly class CargoSafetyInvariants
 
         foreach ($this->deliveries() as $delivery) {
             $placed = $this->placedQuantityOf($delivery);
-            Assert::assertLessThanOrEqual($delivery->quantity(), $placed, $this->message(sprintf('la livraison %d a plus de SCU en caisses (%d) que sa quantité (%d)', $delivery->id(), $placed, $delivery->quantity())));
-            $missing += $delivery->quantity() - $placed;
+            Assert::assertLessThanOrEqual($delivery->effectiveQuantity(), $placed, $this->message(sprintf('la livraison %d a plus de SCU en caisses (%d) que sa quantité (%d)', $delivery->id(), $placed, $delivery->effectiveQuantity())));
+            $missing += $delivery->effectiveQuantity() - $placed;
         }
 
         Assert::assertSame($missing, $this->plan->unplacedCount, $this->message(sprintf('%d SCU manquent dans les caisses mais %d sont signalés sans place', $missing, $this->plan->unplacedCount)));

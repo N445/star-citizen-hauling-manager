@@ -79,6 +79,7 @@ final class CargoPlanner
 
     private function load(Stop $stop, int $stepIndex): void
     {
+        $alreadyPlaced = \count($this->placed);
         $missions = array_filter($stop->pickups, fn (Mission $mission): bool => !isset($this->loadedMissions[$mission->id()]));
         $deliveries = array_merge(...array_map(static fn (Mission $mission): array => $mission->deliveries()->getValues(), array_values($missions)));
         usort($deliveries, fn (Delivery $first, Delivery $second): int => $this->dropStepOf($second) <=> $this->dropStepOf($first));
@@ -92,6 +93,21 @@ final class CargoPlanner
         foreach (array_filter($deliveries, static fn (Delivery $delivery): bool => !\in_array($delivery->mission()->id(), $frozenMissionIds, true)) as $delivery) {
             $this->loadDelivery($delivery, $stop->location, $stepIndex);
         }
+
+        if ([] !== $frozenMissionIds) {
+            $this->sortBottomUp($alreadyPlaced);
+        }
+    }
+
+    /**
+     * Quand des caisses figées sont chargées à un arrêt, elles passent avant les automatiques : on remet la liste du bas
+     * vers le haut, pour qu'une caisse posée à la main par-dessus une caisse automatique arrive après elle (comme on les charge).
+     */
+    private function sortBottomUp(int $from): void
+    {
+        $loaded = array_slice($this->placed, $from);
+        usort($loaded, static fn (PlacedCrate $first, PlacedCrate $second): int => $first->spot->y() <=> $second->spot->y());
+        array_splice($this->placed, $from, \count($loaded), $loaded);
     }
 
     /**
@@ -114,7 +130,7 @@ final class CargoPlanner
 
         foreach ($placement as $index => $crate) {
             $delivery = $deliveries[$crate['delivery']];
-            $this->place(new PlacedCrate(sprintf('%d-%d', $delivery->id(), \count($this->placed)), $delivery, $crate['size'], $spots[$index], $location, $stepIndex, $this->dropSteps[$delivery->id()] ?? null));
+            $this->place(new PlacedCrate(sprintf('%d-%d', $delivery->id(), \count($this->placed)), $delivery, $crate['size'], $spots[$index], $location, $stepIndex, $this->dropSteps[$delivery->id()] ?? null, false, $crate['placed'] ?? false, $crate['manual'] ?? false));
         }
 
         return true;
@@ -122,7 +138,7 @@ final class CargoPlanner
 
     private function loadDelivery(Delivery $delivery, string $location, int $stepIndex): void
     {
-        $pending = CrateSize::split($delivery->quantity(), $this->space->largestCrate());
+        $pending = CrateSize::split($delivery->effectiveQuantity(), $this->space->largestCrate());
 
         while ([] !== $pending) {
             $pending = [...$this->placeOrSplit(array_shift($pending), $delivery, $location, $stepIndex), ...$pending];

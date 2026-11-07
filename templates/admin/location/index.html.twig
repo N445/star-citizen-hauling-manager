@@ -1,0 +1,30 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% trans_default_domain 'admin' %}
+{% import 'admin/location/_tree.html.twig' as tree %}
+
+{% block content_title 'location.root_title'|trans %}
+
+{% block main %}
+    <div class="loc-page">
+        <p class="text-muted">{{ 'location.root_intro'|trans }} {{ 'location.total_count'|trans({count: total}) }}</p>
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <section class="loc-card" data-location-tree aria-labelledby="loc-tree-title">
+                    <h2 id="loc-tree-title" class="loc-card-title">{{ 'location.tree'|trans }}</h2>
+                    {% if systems is empty %}
+                        <p class="text-muted mb-0">{{ 'location.tree_empty'|trans }}</p>
+                    {% else %}
+                        {{ tree.toolbar('root') }}
+                        {{ tree.tree(systems, 1) }}
+                    {% endif %}
+                </section>
+            </div>
+            <div class="col-12 col-xl-4">
+                <section class="loc-card" aria-labelledby="loc-add-title">
+                    <h2 id="loc-add-title" class="loc-card-title">{{ 'location.add_title_root'|trans }}</h2>
+                    {{ include('admin/location/_add_form.html.twig', {parent: null, draft: draft}) }}
+                </section>
+            </div>
+        </div>
+    </div>
+{% endblock %}

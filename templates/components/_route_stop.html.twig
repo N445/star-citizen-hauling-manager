@@ -27,9 +27,17 @@
                data-highlight-tokens="{{ [delivery_token(delivery.id), mission_token(delivery.mission.id), resource_token(delivery.resource), step_token(step)]|join(' ') }}">
             <input type="checkbox" class="form-check-input me-1" id="delivery-done-{{ delivery.id }}" {{ delivery.isDelivered ? 'checked' }}
                    data-action="change->live#action" data-live-action-param="toggleDelivery" data-track="stop-toggle" data-track-on="change" data-track-props='{"kind":"drop"}' data-live-id-param="{{ delivery.id }}">
-            <span class="route-action-icon" aria-hidden="true">↓</span> {{ 'route.stop.drop'|trans({quantity: delivery.quantity}) }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
+            <span class="route-action-icon" aria-hidden="true">↓</span> {{ 'route.stop.drop'|trans }} {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }}
             <span class="text-body-secondary">· {{ tour.missionLabel(delivery.mission) }}</span>
         </label>
+        <div class="route-qty {{ delivery.hasActualQuantity ? 'route-qty--adjusted' }}">
+            <label class="route-qty__label" for="qty-drop-{{ delivery.id }}">{{ 'quantity.drop'|trans }}</label>
+            <input type="number" inputmode="numeric" min="0" max="{{ constant('App\\Service\\Tour\\QuantityEditor::MAXIMUM') }}" step="1" class="form-control form-control-sm route-qty__input"
+                   id="qty-drop-{{ delivery.id }}" value="{{ delivery.effectiveQuantity }}" data-controller="quantity" data-action="change->quantity#save"
+                   data-quantity-action-value="setDeliveryQuantity" data-quantity-delivery-value="{{ delivery.id }}" data-quantity-kind-value="drop">
+            <span class="route-qty__unit">SCU</span>
+            {% if delivery.hasActualQuantity %}<span class="route-qty__hint">{{ 'quantity.estimate'|trans({quantity: delivery.quantity}) }}</span>{% endif %}
+        </div>
     {% endfor %}
     {% for mission in stop.pickups %}
         {% set pickedUp = mission.isPickedUpAt(stop.location) %}
@@ -41,11 +49,36 @@
                    data-live-mission-param="{{ mission.id }}" data-live-location-param="{{ stop.location }}">
             <span class="route-action-icon" aria-hidden="true">↑</span> {{ 'route.stop.pickup'|trans }} <span class="text-body-secondary">{{ tour.missionLabel(mission) }}</span>
             {% for delivery in mission.deliveries %}
-                <span class="route-action-detail">{{ delivery.quantity }} SCU {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }} → {{ delivery.dropoff }}</span>
+                <span class="route-action-detail">{{ delivery.effectiveQuantity }} SCU {{ include('_commodity_badge.html.twig', {name: delivery.resource}) }} → {{ delivery.dropoff }}</span>
             {% endfor %}
             {% if mission.pickups|length > 1 %}
                 <span class="route-action-detail small text-body-secondary">{{ 'route.stop.split_pickup'|trans({count: mission.pickups|length}) }}</span>
             {% endif %}
         </label>
+        {% set split = mission.type.hasSeveralPickups %}
+        {% set recorded = mission.pickupQuantity(stop.location) %}
+        {% set remaining = max(0, mission.totalQuantity - mission.pickupQuantitySum) %}
+        {% set unrecorded = mission.pickups|filter(l => mission.pickupQuantity(l) is null)|length %}
+        {% set slug = stop.location|lower|replace({' ': '-'}) %}
+        <div class="route-qty {{ recorded is not null or (mission.deliveries|first).hasActualQuantity ? 'route-qty--adjusted' }}">
+            <label class="route-qty__label" for="qty-pickup-{{ mission.id }}-{{ slug }}">{{ 'quantity.pickup'|trans }}</label>
+            <input type="number" inputmode="numeric" min="0" max="{{ constant('App\\Service\\Tour\\QuantityEditor::MAXIMUM') }}" step="1" class="form-control form-control-sm route-qty__input"
+                   id="qty-pickup-{{ mission.id }}-{{ slug }}" value="{{ split ? recorded : (recorded ?? mission.effectiveQuantity) }}" placeholder="{{ split ? remaining : '' }}"
+                   data-controller="quantity" data-action="change->quantity#save"
+                   data-quantity-action-value="setPickupQuantity" data-quantity-mission-value="{{ mission.id }}" data-quantity-location-value="{{ stop.location }}" data-quantity-kind-value="pickup">
+            <span class="route-qty__unit">SCU</span>
+            {% if split %}
+                <span class="route-qty__hint">{{ 'quantity.remaining'|trans({remaining: remaining, total: mission.totalQuantity}) }}</span>
+            {% endif %}
+        </div>
+        {% if split and unrecorded < mission.pickups|length %}
+            {% if mission.pickupQuantitySum > mission.totalQuantity %}
+                <div class="route-qty__warning" role="status">{{ 'quantity.warning.over'|trans({sum: mission.pickupQuantitySum, total: mission.totalQuantity}) }}</div>
+            {% elseif unrecorded == 0 and mission.pickupQuantitySum < mission.totalQuantity %}
+                <div class="route-qty__warning" role="status">{{ 'quantity.warning.under'|trans({sum: mission.pickupQuantitySum, total: mission.totalQuantity}) }}</div>
+            {% endif %}
+        {% elseif not split and recorded is not null and mission.type.value == 'multiple_drop_off' and recorded != mission.effectiveQuantity %}
+            <div class="route-qty__warning" role="status">{{ 'quantity.warning.drops'|trans({picked: recorded, drops: mission.effectiveQuantity}) }}</div>
+        {% endif %}
     {% endfor %}
 </li>
