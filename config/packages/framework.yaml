@@ -13,3 +13,9 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+when@prod:
+    framework:
+        session:
+            # Volume nommé sessions_data (compose.prod.yaml) : var/ est un tmpfs en prod, les sessions y seraient perdues à chaque mise à jour.
+            save_path: /sessions

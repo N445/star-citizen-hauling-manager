@@ -63,4 +63,6 @@ ENV APP_ENV=prod APP_DEBUG=0 SERVER_NAME=":8000" FRANKENPHP_CONFIG="worker ./pub
 COPY docker/php/conf.d/prod.ini $PHP_INI_DIR/conf.d/
 COPY --from=builder /app /app
 COPY --from=assets /app/public/build /app/public/build
+# Dossier des sessions PHP : volume nommé en prod (var/ y est un tmpfs vidé à chaque mise à jour). Créé ici pour que le volume en hérite les droits.
+RUN mkdir /sessions && chown www-data:www-data /sessions && chmod 700 /sessions
 EXPOSE 8000

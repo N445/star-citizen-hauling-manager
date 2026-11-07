@@ -32,6 +32,8 @@ services:
         target: /app/var
         tmpfs:
           mode: 01777
+      # Sessions PHP persistantes : sans ce volume chaque mise à jour déconnecte tout le monde.
+      - sessions_data:/sessions
     depends_on:
       database: { condition: service_healthy }
     networks: [app, traefik]
@@ -78,6 +80,7 @@ services:
 
 volumes:
   database_data:
+  sessions_data:
 
 networks:
   app:
