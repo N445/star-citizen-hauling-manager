@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Account;
 
 use App\Entity\User;
+use App\Repository\ContactMessageRepository;
 use App\Repository\TourRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,6 +16,7 @@ final readonly class UserAccounts
         private AccountRules $rules,
         private UserPasswordHasherInterface $passwordHasher,
         private TourRepository $tourRepository,
+        private ContactMessageRepository $contactMessages,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -39,10 +41,13 @@ final readonly class UserAccounts
     }
 
     /**
-     * Supprimer un compte supprime tout : ses tournées, leurs missions, donc son historique.
+     * Supprimer un compte supprime tout : ses tournées, leurs missions, donc son historique. Seuls ses messages de contact
+     * restent, rendus anonymes.
      */
     public function delete(User $user): void
     {
+        $this->contactMessages->anonymizeAuthor($user);
+
         foreach ($this->tourRepository->findOwnedBy($user) as $tour) {
             $this->entityManager->remove($tour);
         }

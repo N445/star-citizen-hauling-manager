@@ -1,0 +1,103 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% trans_default_domain 'admin' %}
+
+{% macro stat(label, value, hint = null, link = null) %}
+    <div class="col-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">{{ label }}</div>
+                <div class="fs-3 fw-semibold">{% if link %}<a href="{{ link }}">{{ value|number_format(0, ',', ' ') }}</a>{% else %}{{ value|number_format(0, ',', ' ') }}{% endif %}</div>
+                {% if hint %}<div class="text-muted small">{{ hint }}</div>{% endif %}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro ranking(title, rows, unit = null) %}
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6">{{ title }}</h2>
+                {% if rows is empty %}
+                    <p class="text-muted mb-0">{{ 'dashboard.empty'|trans({}, 'admin') }}</p>
+                {% else %}
+                    <ol class="list-group list-group-flush list-group-numbered">
+                        {% for row in rows %}
+                            <li class="list-group-item d-flex justify-content-between gap-2 px-0">
+                                <span class="text-truncate me-auto ms-1">{{ row.label }}</span>
+                                <span class="text-muted text-nowrap">{{ row.value|number_format(0, ',', ' ') }}{{ unit ? ' ' ~ unit }}</span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% import _self as dashboard %}
+
+{% block content_title 'dashboard.title'|trans %}
+
+{% block main %}
+    {% set users = overview.users %}
+    {% set tours = overview.tours %}
+    {% set missions = overview.missions %}
+    {% set feedback = overview.feedback %}
+    {% set catalog = overview.catalog %}
+
+    <h2 class="h5 mt-2">{{ 'dashboard.section.activity'|trans }}</h2>
+    <div class="row g-3 mb-4">
+        {{ dashboard.stat('dashboard.users'|trans, users.total, 'dashboard.users_recent'|trans({week: users.last7Days, month: users.last30Days}), ea_url().setController('App\\Controller\\Admin\\UserCrudController')) }}
+        {{ dashboard.stat('dashboard.tours'|trans, tours.total, 'dashboard.tours_split'|trans({account: tours.withAccount, anonymous: tours.anonymous, orphan: tours.orphan}), ea_url().setController('App\\Controller\\Admin\\TourCrudController')) }}
+        {{ dashboard.stat('dashboard.missions'|trans, missions.total, 'dashboard.missions_split'|trans({progress: missions.inProgress, finished: missions.finished})) }}
+        {{ dashboard.stat('dashboard.finished_week'|trans, missions.finishedLast7Days) }}
+        {{ dashboard.stat('dashboard.reward'|trans, missions.rewardFinished, 'aUEC') }}
+        {{ dashboard.stat('dashboard.scu'|trans, missions.scuDelivered, 'SCU') }}
+        {{ dashboard.stat('dashboard.reports'|trans, feedback.reportsOpen, 'dashboard.open_of'|trans({total: feedback.reportsTotal}), ea_url().setController('App\\Controller\\Admin\\RouteReportCrudController')) }}
+        {{ dashboard.stat('dashboard.contact'|trans, feedback.contactOpen, 'dashboard.open_of'|trans({total: feedback.contactTotal}), ea_url().setController('App\\Controller\\Admin\\ContactMessageCrudController')) }}
+    </div>
+
+    <h2 class="h5">{{ 'dashboard.section.usage'|trans }}</h2>
+    <div class="row g-3 mb-4">
+        {{ dashboard.ranking('dashboard.top_ships'|trans, overview.topShips) }}
+        {{ dashboard.ranking('dashboard.top_commodities'|trans, overview.topCommodities, 'SCU') }}
+        {{ dashboard.ranking('dashboard.top_dropoffs'|trans, overview.topDropoffs) }}
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">{{ 'dashboard.latest_users'|trans }}</h2>
+                    {% for user in overview.latestUsers %}
+                        <div class="d-flex justify-content-between gap-2 py-1 border-bottom">
+                            <span class="text-truncate">{{ user.email }}</span>
+                            <span class="text-muted text-nowrap">{{ user.registeredAt|date('d/m/Y H:i') }}</span>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">{{ 'dashboard.empty'|trans({}, 'admin') }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">{{ 'dashboard.latest_contacts'|trans }}</h2>
+                    {% for contact in overview.latestContacts %}
+                        <a class="d-block py-1 border-bottom text-reset text-decoration-none" href="{{ ea_url().setController('App\\Controller\\Admin\\ContactMessageCrudController').setAction('detail').setEntityId(contact.id) }}">
+                            <span class="badge {{ contact.resolved ? 'badge-success' : 'badge-warning' }}">{{ contact.category.label|trans({}, 'messages') }}</span>
+                            <span class="text-muted small">{{ contact.createdAt|date('d/m/Y H:i') }} · {{ contact.author ? contact.author.email : 'tour.guest'|trans }}</span>
+                            <span class="d-block text-truncate">{{ contact.message }}</span>
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-0">{{ 'dashboard.empty'|trans({}, 'admin') }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-muted small">{{ 'dashboard.catalog'|trans({ships: catalog.ships, commodities: catalog.commodities, locations: catalog.locations}) }}</p>
+{% endblock %}

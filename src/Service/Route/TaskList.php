@@ -148,6 +148,16 @@ final class TaskList
     }
 
     /**
+     * Ce qui est vraiment à bord, pour l'affichage : un ramassage multiple ne compte que les lieux déjà ramassés. Le calcul
+     * du parcours garde {@see loadOf()}, qui réserve toute la mission dès son début (sinon une autre mission prendrait la
+     * place des caisses encore à ramasser).
+     */
+    public function aboardOf(int $done): int
+    {
+        return array_sum(array_map(fn (int $missionIndex): int => $this->aboardOfMission($missionIndex, $done), array_keys($this->missions)));
+    }
+
+    /**
      * @return list<Task>
      */
     public function tasksIn(int $done): array
@@ -228,6 +238,14 @@ final class TaskList
         $delivered = array_filter($quantities, static fn (int $taskIndex): bool => 0 !== ($done & (1 << $taskIndex)), ARRAY_FILTER_USE_KEY);
 
         return $this->totalOf($missionIndex) - array_sum($delivered);
+    }
+
+    private function aboardOfMission(int $missionIndex, int $done): int
+    {
+        $pickedUp = array_keys(array_filter($this->pickupsByMissionAndLocation[$missionIndex], static fn (int $bit): bool => 0 !== ($done & $bit)));
+        $loaded = $this->missions[$missionIndex]->quantityLoadedFrom(array_map('strval', $pickedUp));
+
+        return max(0, $loaded - ($this->totalOf($missionIndex) - $this->loadOfMission($missionIndex, $done)));
     }
 
     private function totalOf(int $missionIndex): int

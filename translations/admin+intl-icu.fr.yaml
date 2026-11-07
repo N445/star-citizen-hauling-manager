@@ -1,10 +1,12 @@
 menu:
     site: Retour au site
+    dashboard: Tableau de bord
     accounts: Comptes
     users: Utilisateurs
     planning: Planification
     tours: Tournées
     reports: Signalements de route
+    contact: Messages de contact
     missions: Missions
     catalog: Catalogue
     ships: Vaisseaux
@@ -26,16 +28,16 @@ tour:
     plural: Tournées
     name: Nom
     owner: Propriétaire
-    guest: invité
+    guest: Anonyme
     orphan: orpheline
     ship: Vaisseau
     capacity: Capacité (SCU)
     start_location: Lieu de départ
     missions: Missions
     filter:
-        guest: Tournée d'invité
-        not_guest: Pas une tournée d'invité
-        is_guest: Tournée d'invité
+        guest: Tournée anonyme
+        not_guest: Pas une tournée anonyme
+        is_guest: Tournée anonyme
 
 mission:
     singular: Mission
@@ -166,3 +168,44 @@ report:
         steps: Étape de chargement → déchargement
         flags: État
         raw: Instantané brut (JSON)
+
+contact:
+    singular: Message de contact
+    plural: Messages de contact
+    category: Catégorie
+    status: Statut
+    message: Message
+    author: Auteur
+    reply_email: E-mail de réponse
+    no_reply_email: aucun (pas de réponse possible)
+    created_at: Reçu le
+    resolve: Marquer comme traité
+    reopen: Rouvrir
+    flash:
+        resolved: Message marqué comme traité.
+        reopened: Message rouvert.
+
+dashboard:
+    title: Tableau de bord
+    empty: Rien pour l'instant.
+    section:
+        activity: Activité
+        usage: Utilisation
+    users: Comptes
+    users_recent: '+{week} sur 7 jours, +{month} sur 30 jours'
+    tours: Tournées
+    tours_split: '{account} avec compte, {anonymous} anonymes, {orphan} orphelines'
+    missions: Missions
+    missions_split: '{progress} en cours, {finished} terminées'
+    finished_week: Missions terminées (7 jours)
+    reward: Récompenses des missions terminées
+    scu: Cargaison livrée
+    reports: Signalements ouverts
+    contact: Messages de contact ouverts
+    open_of: 'sur {total} au total'
+    top_ships: Vaisseaux les plus utilisés (tournées)
+    top_commodities: Ressources les plus transportées
+    top_dropoffs: Lieux de livraison les plus fréquents
+    latest_users: Dernières inscriptions
+    latest_contacts: Derniers messages de contact
+    catalog: 'Catalogue : {ships} vaisseaux, {commodities} ressources, {locations} lieux.'

@@ -246,3 +246,39 @@ report:
         too_many: 'Too many reports in the last hour (maximum {maximum}). Please try again later.'
         too_soon: 'Please wait {seconds} seconds before sending another report.'
         anonymous: 'Your session could not be identified: reload the page and try again.'
+
+contact:
+    title: Contact
+    subtitle: An idea for an improvement, a bug, a question? Write to us, every message is read.
+    submit: Send
+    privacy: Your message is kept while we handle it.
+    form:
+        category: Subject
+        message: Message
+        message_help: Describe your idea or the problem as precisely as you can.
+        email: Email to reply to (optional)
+        email_help: Leave empty if you don't expect an answer.
+    category:
+        improvement: Improvement idea
+        bug: Bug
+        question: Question
+        other: Other
+    flash:
+        sent: Thank you! Your message has been sent.
+    error:
+        too_soon: 'Please wait {seconds, plural, one {# more second} other {# more seconds}} before sending another message.'
+        too_many: 'You already sent {maximum} messages this hour. Please try again later.'
+
+footer:
+    label: Footer links
+    contact: Contact
+    notice: Legal notice
+    privacy: Privacy
+    disclaimer: Unofficial fan site, not affiliated with Cloud Imperium Games.
+
+legal:
+    updated_at: 'Last updated: {date, date, long}'
+    notice:
+        title: Legal notice
+    privacy:
+        title: Privacy policy

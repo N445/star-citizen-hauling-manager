@@ -7,6 +7,7 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Service\Account\AccountRules;
 use App\Service\Account\UserAccounts;
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -87,6 +88,18 @@ final class UserCrudController extends AbstractCrudController
                 'setter' => $this->changePassword(...),
                 'constraints' => [new Assert\Length(min: AccountRules::PASSWORD_MIN_LENGTH, max: 4096)],
             ]);
+    }
+
+    /**
+     * Même suppression que le profil et la console : tournées effacées, messages de contact rendus anonymes.
+     */
+    public function deleteEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        if (!$entityInstance instanceof User) {
+            return;
+        }
+
+        $this->userAccounts->delete($entityInstance);
     }
 
     private function changePassword(User $user, ?string $plainPassword): void

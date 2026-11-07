@@ -2,6 +2,11 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    # Derrière Traefik (TLS terminé par lui) : sans cela Symfony se croit en HTTP et génère des URL http:// (barre de debug
+    # bloquée en « contenu mixte », sitemap, redirections). Le conteneur n'est joignable que via Traefik sur un réseau privé.
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']
+
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 

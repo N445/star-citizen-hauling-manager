@@ -19,7 +19,7 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
     make test                                                  # lint + toute la suite
     make watch                                                 # Encore en mode watch
     make examples                                              # (re)crée les tournées d'exemple ; un seul : bin/console app:examples:load 5
-    docker compose exec -T php vendor/bin/phpunit tests/Domain
+    docker compose exec -T php vendor/bin/phpunit tests/Service
     docker compose exec -T php bin/console lint:twig templates
 
 - Image FrankenPHP multi-stage `docker/Dockerfile` : `dev` (code monté, uid de l'hôte) et `prod` (code + assets compilés,
@@ -84,7 +84,8 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
 - **Parcours** (`src/Service/Route/`, PHP pur) : `RoutePlanner::plan(Tour, RouteMode): Route`.
   `TaskList` transforme les missions en tâches localisées indexées en bits (ramassage par mission et par lieu, une
   tâche par livraison) ; une livraison n'est possible qu'une fois **tous** les ramassages de sa mission faits ; en
-  ramassage multiple toute la cargaison compte à bord dès le premier ramassage (prudent pour la capacité).
+  ramassage multiple toute la cargaison est **réservée** dès le premier ramassage (`TaskList::loadOf`, prudent pour la
+  capacité), mais la charge affichée par arrêt (`Stop::load` = `TaskList::aboardOf`) ne compte que les lieux déjà ramassés.
   `RouteSearch` = A* sur (lieu, tâches faites), 1 par arrêt, heuristique = lieux restant à visiter. À chaque arrêt on
   livre tout, puis la `StopPolicy` du mode ramasse : `FewestStopsPolicy` (tout ce qui rentre ; quand la capacité force
   un choix, une option par mission prioritaire, sinon le glouton faisait plus d'arrêts que le mode mission) ou `MissionFocusPolicy` (une mission à la fois ; plusieurs états possibles = choix de la mission
@@ -143,7 +144,90 @@ Tom Select, PHPUnit. Interface en anglais par défaut et en français (POC fonct
   `data-track-props='{...}'`) sur n'importe quel élément, écouté par délégation dans `assets/stats.js` (survit aux rendus
   Live Component) ; en JS : `track('nom')`. Posés : `tour-create/save/new`, `mission-add/update/edit`, `route-mode`,
   `route-reorder`, `route-reset-order`, `stop-toggle`, `doors-change`, `cargo-reset-view`, `tour-tab`, `locale-switch`,
-  `theme-switch`, `login-submit`, `register-submit` (clics/envois, pas résultats validés).
+  `theme-switch`, `login-submit`, `register-submit`, `contact-submit` (clics/envois, pas résultats validés).
+
+## Fonctionnalités ajoutées depuis (elles priment sur les descriptions plus anciennes ci-dessus)
+- **Édition manuelle de la soute** : `src/Service/Cargo/` `CargoEditor` (`move`, `swap` à taille égale, `markPlaced`, `reset`),
+  `PlacementRules` (forme du jeu et rotation, dans une grille, `minSize`/`maxSize`, pas de chevauchement, caisse soutenue
+  sur toute sa surface), `PlacementException` (clés `cargo.edit.error.*`). Les mêmes règles existent côté navigateur dans
+  `assets/cargo-rules.js` (aperçu vert/rouge) : **toute règle modifiée l'est aux deux endroits**. Le serveur valide
+  contre les caisses visibles à l'étape courante puis fige la mission entière dans `Mission::cargoPlacement` avec les
+  marqueurs `manual` et `placed`. Actions Live de `RoutePanel` : `moveCrate`, `swapCrates`, `markCrate`, `resetPlacement`
+  (arguments scalaires, un refus part au navigateur par l'événement `cargo:rejected`). Interaction dans
+  `cargo-grid_controller.js` : clic = sélection, glisser = déplacer (OrbitControls coupé pendant le glisser), R = pivoter,
+  flèches = décaler, Ctrl+Z = annuler, Maj = pas d'échange, Entrée/V = « Posée ✓ » (caisse validée : ne bouge plus, marqueur
+  ✓, compteur n/m). Le placement manuel survit au décochage du ramassage ; effacé si la mission est modifiée ou au reset.
+  Au chargement, `CargoPlanner` remet les caisses figées du bas vers le haut (sinon une caisse posée à la main flotte).
+- **Surbrillance verrouillable** : clic sur mission/livraison/ressource/étape/caisse 3D fige la surbrillance (2e clic, vide
+  ou Échap la lève) ; l'événement `cargo:highlight` porte `locked`. Caisses surlignées qui clignotent, les autres
+  atténuées ; `prefers-reduced-motion` = atténuation fixe. Bordure des caisses = couleur de la ressource ; vert/orange/rouge
+  ne sont plus que des halos d'état (à charger / à décharger / empilée).
+- **Ramassage multiple réparti** : `Mission::pickupShares(ordre)` = SCU chargés par lieu (quantité saisie, sinon le reste de
+  l'estimation au **premier lieu sans quantité** ; hors `MultiplePickUp` à une livraison, tout au premier ramassage) ;
+  `Mission::quantityLoadedFrom(lieux)` = même règle sans ordre (affichage de la charge). `CargoPlanner` charge chaque part à
+  son arrêt ; chaque caisse figée porte son lieu (`pickup` dans `cargoPlacement`) et n'est replacée qu'à cet arrêt (ancien
+  format sans `pickup` = premier lieu ; plus de SCU figés que la part = placement ignoré, recalculé). Bug corrigé : 2 + 10 SCU
+  saisis, les 12 montaient au premier ramassage.
+- **Quantités réelles (SCU)** : `Delivery::actualQuantity`, `Mission::pickupQuantities`, `effectiveQuantity()` (remplace
+  l'estimation dans `TaskList` et `CargoPlanner`), service `QuantityEditor` (entier 0–10000, total ≤ capacité du vaisseau),
+  actions `RoutePanel::setDeliveryQuantity|setPickupQuantity`. L'ordre des arrêts est **figé avant** d'enregistrer une
+  quantité (saisir ne réordonne jamais). Changer une quantité efface les emplacements figés de la mission ; modifier la
+  mission remet tout à zéro. Interface : un **badge noir discret à la place de la quantité affichée** (jamais en plus), un
+  clic = champ de même taille, Entrée/blur enregistre, Échap annule (`_scu_badge.html.twig`, `quantity_controller.js`).
+  Le ramassage n'a un badge que si la mission a une seule livraison ; sinon quantités de livraison en texte simple.
+  Piège Twig : `include` transmet tout le contexte, passer `with_context = false` aux partiels qui testent `is defined`.
+- **Signalement d'erreur** : icône drapeau dans l'en-tête de la route, modale (`route-report_controller.js`), entité
+  `RouteReport` (message, catégorie, statut ouvert/résolu, `snapshot` JSON figé : missions, quantités, vaisseau, portes,
+  route générée, plan de soute, locale ; jamais d'email), `src/Service/Report/` (`RouteSnapshot`, `RouteReporter` : 30 s mini
+  entre deux envois et 5 par heure par compte/jeton invité, `ReportReplay`), `bin/console app:reports:replay <id>`. Admin :
+  `RouteReportCrudController` en consultation + `RouteReportStatusController` (résoudre/rouvrir, CSRF).
+- **Admin des lieux en arborescence** : `LocationTreeController` (`/admin/locations`, pages racine et lieu avec fil d'Ariane,
+  arbre repliable `assets/location-tree.js`, ajout simple ou en lot « tout ou rien », renommer/déplacer/supprimer),
+  `src/Service/Location/LocationEditor` (nom unique parmi les frères sans tenir compte de la casse, pas de cycle, suppression
+  en cascade). Remplace l'ancien `LocationCrudController`.
+- **Tableau de bord admin** : `/admin` (`DashboardController::index`, `templates/admin/dashboard.html.twig`) = récap global
+  calculé par `src/Service/Admin/AdminOverview` (une requête agrégée par chiffre : comptes, tournées avec compte / anonymes /
+  orphelines, missions en cours / terminées, aUEC et SCU livrés, signalements et messages ouverts, top 5 vaisseaux,
+  ressources, lieux de livraison, dernières inscriptions et messages). Menu : badges du nombre de signalements et messages
+  ouverts. Auteur d'une tournée sans compte affiché **« Anonyme »** (`tour.guest`), sans auteur ni jeton = « orpheline ».
+- **Page de contact** `/contact` (route `contact`) : retours d'amélioration, bugs, questions. `ContactController` +
+  `ContactFormType` (DTO `ContactData`, Turnstile via `TurnstileType`), entité `ContactMessage` (catégorie `ContactCategory`,
+  message, e-mail de réponse **facultatif** pré-rempli pour un compte, locale, statut `ReportStatus` réutilisé, auteur ou
+  jeton invité — le jeton est émis si absent). Anti-abus `Service/Contact/ContactSender` : 60 s mini entre deux messages,
+  5 par heure par compte/jeton (refus = 429 + erreur de formulaire). Admin : `ContactMessageCrudController` (consultation,
+  suppression) + `ContactMessageStatusController` (traiter/rouvrir, CSRF `admin_contact_status`). À la suppression du compte, ses messages **restent, rendus anonymes** (choix de l'utilisateur) : `UserAccounts::delete` → `ContactMessageRepository::anonymizeAuthor` (auteur et e-mail effacés), FK `SET NULL` en filet ; la suppression d'un utilisateur dans l'admin passe aussi par `UserAccounts::delete`.
+- **Pages légales (RGPD)** : `/legal` (mentions légales) et `/privacy` (confidentialité), `LegalController` ; textes longs en
+  gabarits par langue `templates/legal/{notice,privacy}.{fr,en}.html.twig` (pas en clés de traduction). Éditeur « N445 » et
+  hébergement « serveur personnel de l'éditeur, situé en France » écrits en dur, sans variable d'environnement : **choix de
+  l'utilisateur** (auto-hébergé, ne pas publier d'adresse personnelle ; risque LCEN jugé faible et accepté). Liens dans le **pied de page**
+  (`base.html.twig` : contact, mentions, confidentialité, avertissement « site de fan » ; toujours en bas de l'écran : `body` en flex colonne + `margin-top: auto`). La politique décrit cookies
+  (`PHPSESSID`, `hauling_guest`, `hm-theme` en localStorage), Umami, Turnstile et les durées promises (signalements et
+  messages : au plus 2 ans) : **toute nouvelle donnée ou nouveau service tiers doit y être ajouté** (fr + en).
+- **Sitemap dynamique** : `SitemapController` sert `/sitemap.xml` (toutes les routes marquées `options: ['sitemap' => true]` :
+  accueil, login, inscription, contact, légal) et `/robots.txt` (exclut `/admin`, `/tours`, `/history`, `/profile`…). Une
+  nouvelle page publique sans paramètre = ajouter l'option sur sa route ; jamais les tournées (privées).
+- **Admin ressources** : sélecteur de couleur avancé Pickr (`assets/admin.js`, entrée Encore `admin`, chargée par
+  `DashboardController::configureAssets`).
+- **Listes déroulantes** : Tom Select trie par ordre alphabétique strict (`sortField` + `score` constant : sinon la
+  pertinence prime et « hur » ramène HUR-L1 avant les noms longs). Vaisseaux triés par nom puis constructeur.
+- **Production** : `make update` (CD) = pull + up + `init` (migrations puis import des vaisseaux, idempotent : upsert par
+  slug). `app:ships:doors` n'y est volontairement **pas** lancé (il écrase les portes corrigées dans l'admin) ; l'import
+  qui échoue ne fait pas échouer un déploiement déjà en ligne (avertissement). Sessions PHP : volume nommé `sessions_data`
+  monté sur `/sessions` (`save_path` en prod ; `var/` est un tmpfs vidé à chaque mise à jour, d'où des déconnexions).
+  **Pas de sessions en base** (choix de l'utilisateur).
+- **Tests** : `.env.test` utilise SQLite en mémoire pour les tests fonctionnels (`tests/Admin/LocationTestCase`, schéma
+  recréé à chaque test) ; `tests/Twig/` rend vraiment les gabarits (un lint ne voit pas les erreurs d'exécution : ajouter un
+  test de rendu pour tout nouveau partiel).
+
+## Environnement de travail (WSL)
+- Le projet vit dans **Ubuntu WSL2** : `~/star-citizen-hauling-manager` (Windows : `\\wsl.localhost\Ubuntu\home\robin\...`).
+  Le dossier `C:\dev\projects\star-citizen-hauling-helper` est une ancienne copie : **ne plus y travailler** (conflits de
+  merge déjà arrivés ; en cas de doute, **le code Linux est prioritaire**). Sur l'hôte Windows `make` n'existe pas : lancer
+  les commandes via `wsl -d Ubuntu -e bash -lc 'cd ~/star-citizen-hauling-manager && make ...'`.
+- **Toujours passer `.env.local`** à `docker compose` (le Makefile le fait : `make start`, `make up`) ; sinon le conteneur se
+  rattache au mauvais réseau Traefik. Traefik est dans `~/project/traefik` (réseau `traefik`), à lancer avec
+  `docker compose up -d` ; site sur http://sc-hauling-manager.local et http://localhost:8000.
+- Fins de ligne LF (`.gitattributes`) : normaliser un `Dockerfile`/`compose*.yaml` en CRLF avant de l'éditer par motif.
 
 ## Tests de philosophie
 `tests/Philosophy/` (~1 170 tests, ~6 s) : invariants du parcours et de la soute sur ~350 cas générés à graine fixe
@@ -152,6 +236,9 @@ vérifient des principes, pas l'implémentation ; ids des entités posés par r�
 « corriger » un échec, vérifier si c'est le test ou le code qui a tort.
 
 ## Pièges connus
+- **Derrière Traefik** : `framework.trusted_proxies` = `%env(TRUSTED_PROXIES)%` (`private_ranges` dans `.env`) + en-têtes
+  `X-Forwarded-*`. Sans cela Symfony se croit en HTTP sous HTTPS : URL `http://` (barre de debug bloquée en « contenu mixte »,
+  sitemap, redirections). Ne pas publier le port 8000 du conteneur en prod (en-têtes falsifiables depuis un réseau privé).
 - **Tom Select dans le Live Component** : chaque widget est enveloppé dans `data-live-ignore` (sinon le re-rendu détruit
   le DOM de Tom Select), avec un id qui inclut `formVersion` : incrémenté à chaque formulaire neuf, il force la
   recréation des champs (sinon une mission validée laisserait ses valeurs). Les erreurs restent hors de l'enveloppe.
@@ -171,8 +258,28 @@ vérifient des principes, pas l'implémentation ; ids des entités posés par r�
 
 ## État
 Fait : socle Docker/Traefik, CI/CD GHCR, import sc-cargo.space, tournées + missions (page unique `/tours/{id}` : formulaire 3 | soute 6 | parcours 3, missions en Live Component), calcul du parcours (2 modes), profiler en dev.
-À faire : tests (moteur de route en priorité), placement des caisses dans la grille, puis l'interface. `.claude/agents/` décrit l'ancienne architecture (obsolète).
+Fait ensuite : tests de philosophie, placement et édition manuelle des caisses, surbrillance verrouillable, quantités réelles,
+signalement d'erreur, admin des lieux en arbre, sélecteur de couleur, sessions persistantes en prod, CD avec `init`,
+tableau de bord admin, page de contact (Turnstile), pages légales RGPD + pied de page, sitemap/robots dynamiques.
+À faire : purge des vieilles tournées invité et des messages/signalements
+de plus de 2 ans (promis par la politique de confidentialité), `login_throttling` (rate-limiter absent), vérifications navigateur restantes
+(glisser jusqu'à un dépôt valide, échange, rotation, annulation, tactile, français, thème clair), CSRF de l'action Live `report`.
 
 ## Conventions
-KISS, classes `final readonly` quand possible, types stricts, peu de commentaires. Ne rien commiter/pousser sans demande explicite.
-Répartition des fichiers entre agents : voir `.claude/agents/` (pas de chevauchement).
+- **KISS** et **Object Calisthenics** : un seul niveau d'indentation par méthode, pas de `else`, tout type primitif métier
+  enveloppé dans un objet (value object), collections de première classe, une seule `->` par ligne quand c'est possible,
+  pas d'abréviations, petites classes (≈ 50 lignes) et méthodes courtes, au plus deux propriétés d'instance par classe
+  quand c'est raisonnable, pas de getters/setters génériques (méthodes métier : `rename()`, `moveTo()`…).
+- **Code linéaire** (garde-fous / *early return*, aussi appelé « happy path à plat ») : on traite d'abord les cas d'erreur
+  ou limites par un `return`/`throw` immédiat, puis le cas nominal reste en bas, sans imbrication ni `if` profond ; pas de
+  `else` après un `return`.
+- Classes `final readonly` quand possible, types stricts, peu de commentaires (seulement le « pourquoi » non évident).
+- Ne rien commiter/pousser sans demande explicite ; ne jamais faire de `git stash` (il emporte le travail des autres agents).
+- **Maintenir les fichiers Claude à jour** : après toute modification qui change le comportement, l'architecture, une
+  commande, un piège ou une décision de l'utilisateur, mettre à jour `CLAUDE.md` (section concernée, et « État »), et
+  `.claude/agents/*.md` si la répartition ou les règles des agents changent. Retirer ce qui devient faux plutôt que
+  d'empiler. Les décisions explicites de l'utilisateur (ex. « pas de sessions en base », « le code Linux est prioritaire »)
+  y sont consignées avec leur raison.
+- Tester vraiment : un lint ne remplace pas un test de rendu ; dire précisément ce qui a été vérifié de bout en bout.
+- Répartition des fichiers entre agents : voir `.claude/agents/` (pas de chevauchement) ; un seul agent à la fois sur les
+  mêmes fichiers (`RoutePanel`, `Mission`, `templates/tour/*`, `DashboardController`).

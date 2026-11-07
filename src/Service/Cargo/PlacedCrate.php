@@ -28,7 +28,7 @@ final readonly class PlacedCrate
     }
 
     /**
-     * @return array{delivery: int, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: true, placed?: true}
+     * @return array{delivery: int, pickup: string, size: int, x: float, y: float, z: float, width: int, height: int, length: int, manual?: true, placed?: true}
      */
     public function toPlacement(): array
     {
@@ -36,6 +36,7 @@ final readonly class PlacedCrate
             ...($this->manual ? ['manual' => true] : []),
             ...($this->placed ? ['placed' => true] : []),
             'delivery' => $this->delivery->id(),
+            'pickup' => $this->pickupLocation,
             'size' => $this->size,
             'x' => $this->spot->x(),
             'y' => $this->spot->y(),

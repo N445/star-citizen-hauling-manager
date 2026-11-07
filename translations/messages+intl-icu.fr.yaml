@@ -246,3 +246,39 @@ report:
         too_many: 'Trop de signalements cette dernière heure ({maximum} maximum). Réessayez plus tard.'
         too_soon: 'Patientez {seconds} secondes avant d''envoyer un autre signalement.'
         anonymous: 'Votre session n''a pas pu être identifiée : rechargez la page et réessayez.'
+
+contact:
+    title: Contact
+    subtitle: Une idée d'amélioration, un bug, une question ? Écrivez-nous, chaque message est lu.
+    submit: Envoyer
+    privacy: Votre message est conservé le temps de le traiter.
+    form:
+        category: Sujet
+        message: Message
+        message_help: Décrivez votre idée ou le problème le plus précisément possible.
+        email: E-mail pour vous répondre (facultatif)
+        email_help: Laissez vide si vous n'attendez pas de réponse.
+    category:
+        improvement: Idée d'amélioration
+        bug: Bug
+        question: Question
+        other: Autre
+    flash:
+        sent: Merci ! Votre message a bien été envoyé.
+    error:
+        too_soon: 'Patientez encore {seconds, plural, one {# seconde} other {# secondes}} avant d''envoyer un autre message.'
+        too_many: 'Vous avez déjà envoyé {maximum} messages cette heure-ci. Réessayez plus tard.'
+
+footer:
+    label: Liens du pied de page
+    contact: Contact
+    notice: Mentions légales
+    privacy: Confidentialité
+    disclaimer: Site de fan non officiel, non affilié à Cloud Imperium Games.
+
+legal:
+    updated_at: 'Dernière mise à jour : {date, date, long}'
+    notice:
+        title: Mentions légales
+    privacy:
+        title: Politique de confidentialité

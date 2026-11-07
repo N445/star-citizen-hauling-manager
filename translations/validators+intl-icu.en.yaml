@@ -33,3 +33,14 @@ mission_type:
         rule: A multiple drop-off mission has a single pickup location and at least two drop-off locations.
     multiple_pick_up:
         rule: A multiple pickup mission has at least two pickup locations and a single drop-off location.
+
+contact:
+    category:
+        not_null: Choose a subject.
+    email:
+        invalid: This email address is not valid.
+        too_long: The email address is too long.
+    message:
+        blank: Write your message.
+        too_short: 'Your message is a bit short ({limit} characters minimum).'
+        too_long: 'Your message is too long ({limit} characters maximum).'

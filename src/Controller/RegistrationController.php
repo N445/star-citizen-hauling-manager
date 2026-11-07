@@ -15,7 +15,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class RegistrationController extends AbstractController
 {
-    #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
+    #[Route('/register', name: 'app_register', options: ['sitemap' => true], methods: ['GET', 'POST'])]
     public function register(Request $request, UserRegistration $userRegistration, TranslatorInterface $translator): Response
     {
         if (null !== $this->getUser()) {

@@ -240,6 +240,53 @@ class Mission
         return array_sum(array_intersect_key($this->pickupQuantities, array_flip($this->pickups)));
     }
 
+    /**
+     * SCU chargés à chaque lieu de ramassage, dans l'ordre de passage : la quantité saisie quand elle est connue, le reste
+     * au premier lieu sans quantité (prudent : ce qui n'est pas connu monte le plus tôt possible). Hors ramassage multiple
+     * à une seule livraison, tout se charge au premier ramassage.
+     *
+     * @param list<string> $order
+     *
+     * @return array<string, int>
+     */
+    public function pickupShares(array $order): array
+    {
+        if ([] === $order || MissionType::MultiplePickUp !== $this->type || 1 !== $this->deliveries->count()) {
+            return [] === $order ? [] : [$order[0] => $this->effectiveQuantity()];
+        }
+
+        $known = array_intersect_key($this->pickupQuantities, array_flip($order));
+        $unknown = array_values(array_diff($order, array_map('strval', array_keys($known))));
+        $shares = $known + array_fill_keys($order, 0);
+
+        if ([] === $unknown) {
+            return $shares;
+        }
+
+        $shares[$unknown[0]] = max(0, $this->effectiveQuantity() - array_sum($known));
+
+        return $shares;
+    }
+
+    /**
+     * SCU à bord une fois ces lieux ramassés, quel que soit l'ordre : même règle que {@see pickupShares()} (le reste inconnu
+     * monte avec le premier lieu sans quantité).
+     *
+     * @param list<string> $pickedUp
+     */
+    public function quantityLoadedFrom(array $pickedUp): int
+    {
+        if ([] === $pickedUp || MissionType::MultiplePickUp !== $this->type || 1 !== $this->deliveries->count()) {
+            return [] === $pickedUp ? 0 : $this->effectiveQuantity();
+        }
+
+        $known = array_intersect_key($this->pickupQuantities, array_flip($this->pickups));
+        $unknownPickedUp = array_diff($pickedUp, array_map('strval', array_keys($known)));
+        $remainder = [] === $unknownPickedUp ? 0 : max(0, $this->effectiveQuantity() - array_sum($known));
+
+        return array_sum(array_intersect_key($known, array_flip($pickedUp))) + $remainder;
+    }
+
     public function pickupQuantity(string $location): ?int
     {
         return $this->pickupQuantities[$location] ?? null;

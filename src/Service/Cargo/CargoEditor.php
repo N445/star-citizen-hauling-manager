@@ -117,6 +117,7 @@ final readonly class CargoEditor
         foreach ($placements as $missionId => $placement) {
             $tour->mission($missionId)->freezeCargo(array_map(static fn (array $crate): array => [
                 'delivery' => $crate['delivery'],
+                ...(isset($crate['pickup']) ? ['pickup' => $crate['pickup']] : []),
                 'size' => $crate['size'],
                 'x' => (float) $crate['x'],
                 'y' => (float) $crate['y'],

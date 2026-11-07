@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ ('legal.' ~ page ~ '.title')|trans }} · Hauling Manager{% endblock %}
+
+{% block body %}
+    <article class="hm-legal mx-auto">
+        <h1 class="h3 mb-1">{{ ('legal.' ~ page ~ '.title')|trans }}</h1>
+        <p class="text-body-secondary small mb-4">{{ 'legal.updated_at'|trans({date: updatedAt}) }}</p>
+        {{ include(content) }}
+    </article>
+{% endblock %}

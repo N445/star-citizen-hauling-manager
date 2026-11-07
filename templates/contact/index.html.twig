@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme contactForm _self %}
+
+{% block form_errors %}
+    {% for error in errors %}
+        {% set translated = error.messageTemplate|trans(error.messageParameters, 'account') %}
+        <div class="{{ form.parent ? 'invalid-feedback' : 'alert alert-danger' }} d-block">{{ translated == error.messageTemplate ? error.message : translated }}</div>
+    {% endfor %}
+{% endblock %}
+
+{% block title %}{{ 'contact.title'|trans }} · Hauling Manager{% endblock %}
+
+{% block body %}
+    <div class="hm-auth hm-contact">
+        <div class="text-center mb-4">
+            <h1 class="h3 mb-1">{{ 'contact.title'|trans }}</h1>
+            <p class="text-body-secondary mb-0">{{ 'contact.subtitle'|trans }}</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                {{ form_start(contactForm) }}
+                    {{ form_errors(contactForm) }}
+                    {{ form_rest(contactForm) }}
+                    <button class="btn btn-primary w-100 mt-2" type="submit" data-track="contact-submit">{{ 'contact.submit'|trans }}</button>
+                {{ form_end(contactForm) }}
+            </div>
+        </div>
+
+        <p class="mt-3 text-center small text-body-secondary">{{ 'contact.privacy'|trans }} <a href="{{ path('legal_privacy') }}">{{ 'footer.privacy'|trans }}</a></p>
+    </div>
+{% endblock %}

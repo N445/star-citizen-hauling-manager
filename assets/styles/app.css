@@ -123,7 +123,10 @@
    Base
    ========================================================================== */
 body {
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--hm-bg);
     -webkit-font-smoothing: antialiased;
 }
@@ -1065,4 +1068,35 @@ h1, h2, h3, h4, .card-header {
     .hm-stat-value {
         font-size: 1.15rem;
     }
+}
+
+/* Footer (contact and legal pages) */
+/* body en colonne : la marge automatique pousse le pied de page en bas quand la page est courte */
+.hm-footer {
+    margin-top: auto;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.hm-footer a {
+    color: inherit;
+}
+
+.hm-footer a:hover,
+.hm-footer a:focus-visible {
+    color: var(--bs-body-color);
+}
+
+@media (max-width: 1199.98px) {
+    body:has(.tour-tabs) .hm-footer {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* Legal pages */
+.hm-legal {
+    max-width: 52rem;
+}
+
+.hm-legal h2 {
+    margin-top: 1.5rem;
 }

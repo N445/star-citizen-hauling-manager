@@ -31,7 +31,7 @@ final class TourController extends AbstractController
     ) {
     }
 
-    #[Route('/', name: 'home', methods: ['GET', 'POST'])]
+    #[Route('/', name: 'home', options: ['sitemap' => true], methods: ['GET', 'POST'])]
     public function home(Request $request, #[CurrentUser] ?User $user): Response
     {
         $current = null === $user ? $this->tourRepository->findOneOfGuest($this->guestToken->current()) : $this->tourRepository->findLatestOwnedBy($user);

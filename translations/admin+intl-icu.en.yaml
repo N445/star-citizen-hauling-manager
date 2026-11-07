@@ -1,10 +1,12 @@
 menu:
+    dashboard: Dashboard
     site: Back to the site
     accounts: Accounts
     users: Users
     planning: Planning
     tours: Tours
     reports: Route reports
+    contact: Contact messages
     missions: Missions
     catalog: Catalog
     ships: Ships
@@ -26,16 +28,16 @@ tour:
     plural: Tours
     name: Name
     owner: Owner
-    guest: guest
+    guest: Anonymous
     orphan: orphan
     ship: Ship
     capacity: Capacity (SCU)
     start_location: Start location
     missions: Missions
     filter:
-        guest: Guest tour
-        not_guest: Not a guest tour
-        is_guest: Guest tour
+        guest: Anonymous tour
+        not_guest: Not an anonymous tour
+        is_guest: Anonymous tour
 
 mission:
     singular: Mission
@@ -166,3 +168,44 @@ report:
         steps: Load → unload step
         flags: State
         raw: Raw snapshot (JSON)
+
+contact:
+    singular: Contact message
+    plural: Contact messages
+    category: Category
+    status: Status
+    message: Message
+    author: Author
+    reply_email: Reply email
+    no_reply_email: none (cannot be answered)
+    created_at: Received
+    resolve: Mark as handled
+    reopen: Reopen
+    flash:
+        resolved: Message marked as handled.
+        reopened: Message reopened.
+
+dashboard:
+    title: Dashboard
+    empty: Nothing yet.
+    section:
+        activity: Activity
+        usage: Usage
+    users: Accounts
+    users_recent: '+{week} in 7 days, +{month} in 30 days'
+    tours: Tours
+    tours_split: '{account} with an account, {anonymous} anonymous, {orphan} orphaned'
+    missions: Missions
+    missions_split: '{progress} in progress, {finished} finished'
+    finished_week: Missions finished (7 days)
+    reward: Rewards of finished missions
+    scu: Cargo delivered
+    reports: Open route reports
+    contact: Open contact messages
+    open_of: 'out of {total} in total'
+    top_ships: Most used ships (tours)
+    top_commodities: Most hauled commodities
+    top_dropoffs: Most frequent drop-off locations
+    latest_users: Latest sign-ups
+    latest_contacts: Latest contact messages
+    catalog: 'Catalogue: {ships} ships, {commodities} commodities, {locations} locations.'

@@ -26,7 +26,7 @@ final readonly class Route
         $previous = 0;
 
         foreach (array_filter($path, static fn (array $step): bool => null !== $step['location']) as ['location' => $location, 'done' => $done]) {
-            $stops[] = Stop::fromTasks($tasks, $location, $tasks->tasksIn($done & ~$previous), $tasks->loadOf($done));
+            $stops[] = Stop::fromTasks($tasks, $location, $tasks->tasksIn($done & ~$previous), $tasks->aboardOf($done));
             $previous = $done;
         }
 

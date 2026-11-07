@@ -24,8 +24,8 @@ final class CargoPlanner
     /** @var list<PlacedCrate> */
     private array $placed = [];
 
-    /** @var array<int, true> */
-    private array $loadedMissions = [];
+    /** @var array<int, array<string, int>> SCU chargés par lieu de ramassage, par mission */
+    private array $pickupShares = [];
 
     /** @var array<int, int> */
     private array $dropSteps = [];
@@ -42,6 +42,7 @@ final class CargoPlanner
         $this->space = CargoSpace::fromGroups($tour->ship()->cargoGroups(), $tour->doorSides());
         $steps = $route->stops;
         $this->dropSteps = $this->dropSteps($steps);
+        $this->pickupShares = $this->pickupShares($steps);
 
         foreach ($steps as $stepIndex => $stop) {
             $this->unload($stop);
@@ -67,6 +68,26 @@ final class CargoPlanner
         return $dropSteps;
     }
 
+    /**
+     * @param list<Stop> $steps
+     *
+     * @return array<int, array<string, int>>
+     */
+    private function pickupShares(array $steps): array
+    {
+        $orders = [];
+        $missions = [];
+
+        foreach ($steps as $stop) {
+            foreach ($stop->pickups as $mission) {
+                $orders[$mission->id()][] = $stop->location;
+                $missions[$mission->id()] = $mission;
+            }
+        }
+
+        return array_map(static fn (Mission $mission): array => $mission->pickupShares(array_values(array_unique($orders[$mission->id()]))), $missions);
+    }
+
     private function unload(Stop $stop): void
     {
         $deliveryIds = array_map(static fn (Delivery $delivery): int => $delivery->id(), $stop->deliveries);
@@ -80,23 +101,34 @@ final class CargoPlanner
     private function load(Stop $stop, int $stepIndex): void
     {
         $alreadyPlaced = \count($this->placed);
-        $missions = array_filter($stop->pickups, fn (Mission $mission): bool => !isset($this->loadedMissions[$mission->id()]));
-        $deliveries = array_merge(...array_map(static fn (Mission $mission): array => $mission->deliveries()->getValues(), array_values($missions)));
-        usort($deliveries, fn (Delivery $first, Delivery $second): int => $this->dropStepOf($second) <=> $this->dropStepOf($first));
-
-        foreach ($missions as $mission) {
-            $this->loadedMissions[$mission->id()] = true;
-        }
-
+        $missions = array_filter($stop->pickups, fn (Mission $mission): bool => ($this->pickupShares[$mission->id()][$stop->location] ?? 0) > 0);
         $frozenMissionIds = array_map(static fn (Mission $mission): int => $mission->id(), array_filter($missions, fn (Mission $mission): bool => $this->loadFrozen($mission, $stop->location, $stepIndex)));
+        $loads = array_merge(...array_map(fn (Mission $mission): array => $this->loadsAt($mission, $stop->location), array_values(array_filter($missions, static fn (Mission $mission): bool => !\in_array($mission->id(), $frozenMissionIds, true)))));
+        usort($loads, fn (array $first, array $second): int => $this->dropStepOf($second[0]) <=> $this->dropStepOf($first[0]));
 
-        foreach (array_filter($deliveries, static fn (Delivery $delivery): bool => !\in_array($delivery->mission()->id(), $frozenMissionIds, true)) as $delivery) {
-            $this->loadDelivery($delivery, $stop->location, $stepIndex);
+        foreach ($loads as [$delivery, $quantity]) {
+            $this->loadDelivery($delivery, $quantity, $stop->location, $stepIndex);
         }
 
         if ([] !== $frozenMissionIds) {
             $this->sortBottomUp($alreadyPlaced);
         }
+    }
+
+    /**
+     * Ce que la mission charge ici : sa part du ramassage multiple (une seule livraison), sinon toutes ses livraisons.
+     *
+     * @return list<array{Delivery, int}>
+     */
+    private function loadsAt(Mission $mission, string $location): array
+    {
+        $deliveries = $mission->deliveries()->getValues();
+
+        if (1 === \count($deliveries)) {
+            return [[$deliveries[0], $this->pickupShares[$mission->id()][$location]]];
+        }
+
+        return array_map(static fn (Delivery $delivery): array => [$delivery, $delivery->effectiveQuantity()], $deliveries);
     }
 
     /**
@@ -111,20 +143,28 @@ final class CargoPlanner
     }
 
     /**
-     * Caisses déjà chargées par le joueur : elles restent où elles ont été posées, si la soute le permet encore.
+     * Caisses déjà chargées par le joueur : elles restent où elles ont été posées, si la soute le permet encore. Chaque caisse
+     * figée remonte à son lieu de ramassage (sans lieu, ancien format : le premier) ; plus de caisses que la part du lieu
+     * = placement périmé, recalculé.
      */
     private function loadFrozen(Mission $mission, string $location, int $stepIndex): bool
     {
-        $placement = $mission->frozenCargo();
+        $firstPickup = (string) array_key_first($this->pickupShares[$mission->id()]);
+        $placement = array_values(array_filter($mission->frozenCargo() ?? [], static fn (array $crate): bool => ($crate['pickup'] ?? $firstPickup) === $location));
+
+        if ([] === $placement || array_sum(array_column($placement, 'size')) > $this->pickupShares[$mission->id()][$location]) {
+            return false;
+        }
+
         $deliveries = [];
 
         foreach ($mission->deliveries() as $delivery) {
             $deliveries[$delivery->id()] = $delivery;
         }
 
-        $spots = array_map(fn (array $crate): ?Spot => isset($deliveries[$crate['delivery']]) ? $this->space->availableSpot($crate) : null, $placement ?? []);
+        $spots = array_map(fn (array $crate): ?Spot => isset($deliveries[$crate['delivery']]) ? $this->space->availableSpot($crate) : null, $placement);
 
-        if (null === $placement || \in_array(null, $spots, true)) {
+        if (\in_array(null, $spots, true)) {
             return false;
         }
 
@@ -136,9 +176,9 @@ final class CargoPlanner
         return true;
     }
 
-    private function loadDelivery(Delivery $delivery, string $location, int $stepIndex): void
+    private function loadDelivery(Delivery $delivery, int $quantity, string $location, int $stepIndex): void
     {
-        $pending = CrateSize::split($delivery->effectiveQuantity(), $this->space->largestCrate());
+        $pending = CrateSize::split($quantity, $this->space->largestCrate());
 
         while ([] !== $pending) {
             $pending = [...$this->placeOrSplit(array_shift($pending), $delivery, $location, $stepIndex), ...$pending];

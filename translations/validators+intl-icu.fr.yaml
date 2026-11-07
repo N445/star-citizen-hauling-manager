@@ -33,3 +33,14 @@ mission_type:
         rule: Une mission à livraisons multiples a un seul lieu de ramassage et au moins deux lieux de livraison.
     multiple_pick_up:
         rule: Une mission à ramassages multiples a au moins deux lieux de ramassage et un seul lieu de livraison.
+
+contact:
+    category:
+        not_null: Choisissez un sujet.
+    email:
+        invalid: Cette adresse e-mail n'est pas valide.
+        too_long: L'adresse e-mail est trop longue.
+    message:
+        blank: Écrivez votre message.
+        too_short: 'Votre message est un peu court ({limit} caractères minimum).'
+        too_long: 'Votre message est trop long ({limit} caractères maximum).'

@@ -1,0 +1,52 @@
+<p>Cette politique explique quelles données Hauling Manager traite, pourquoi, combien de temps, et comment exercer vos droits
+    au titre du Règlement général sur la protection des données (RGPD). Responsable du traitement : l'éditeur du site (voir les
+    <a href="{{ path('legal_notice') }}">mentions légales</a>). Aucune donnée n'est vendue, louée ni utilisée pour de la publicité.</p>
+
+<h2 class="h5 mt-4">Données traitées</h2>
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr><th scope="col">Quoi</th><th scope="col">Pourquoi (base légale)</th><th scope="col">Durée</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Compte : e-mail, mot de passe (haché, jamais lisible), date d'inscription</td><td>Fournir le service demandé (exécution du contrat)</td><td>Jusqu'à la suppression du compte</td></tr>
+            <tr><td>Tournées, missions, quantités, avancement et durées des missions</td><td>Fournir le service (exécution du contrat)</td><td>Jusqu'à leur suppression, ou celle du compte</td></tr>
+            <tr><td>Sans compte : jeton aléatoire du cookie <code>hauling_guest</code> lié à votre tournée</td><td>Retrouver votre tournée sans compte (exécution du contrat)</td><td>1 an (cookie)</td></tr>
+            <tr><td>Signalements d'erreur : message, catégorie et copie de la tournée concernée (sans e-mail)</td><td>Corriger le calcul (intérêt légitime)</td><td>Le temps de la correction, au plus 2 ans</td></tr>
+            <tr><td>Messages de contact : catégorie, message, langue, et l'e-mail seulement si vous le donnez</td><td>Répondre et améliorer l'outil (intérêt légitime)</td><td>Le temps de traiter la demande, au plus 2 ans</td></tr>
+            <tr><td>Mesure d'audience : pages vues et clics, sans cookie</td><td>Savoir quelles fonctions servent (intérêt légitime)</td><td>Statistiques agrégées</td></tr>
+            <tr><td>Anti-robot : adresse IP et signaux techniques du navigateur, au moment d'un envoi de formulaire</td><td>Sécurité du service (intérêt légitime)</td><td>Durée de la vérification</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h5 mt-4">Cookies et stockage local</h2>
+<ul>
+    <li><code>PHPSESSID</code> (session) : connexion et langue choisie. Nécessaire, supprimé à la fermeture de la session.</li>
+    <li><code>hauling_guest</code> (1 an) : retrouve la tournée d'un visiteur sans compte. Nécessaire au service.</li>
+    <li><code>hm-theme</code> (stockage local du navigateur) : thème clair ou sombre. Ne quitte jamais votre navigateur.</li>
+</ul>
+<p>Ces traceurs sont strictement nécessaires : ils sont dispensés de consentement. Aucun cookie publicitaire ni de suivi
+    entre sites n'est déposé.</p>
+
+<h2 class="h5 mt-4">Sous-traitants et services tiers</h2>
+<ul>
+    <li><strong>Hébergeur</strong> : Serveur personnel de l'éditeur, situé en France. Contact : <a href="{{ path('contact') }}">page de contact</a>.</li>
+    <li><strong>Umami</strong> (mesure d'audience auto-hébergée, sans cookie) : votre navigateur ne parle qu'à ce site, qui
+        transmet l'adresse IP et le navigateur à notre propre instance Umami pour compter les visites. Umami ne conserve pas
+        l'adresse IP : il n'en garde qu'une empreinte anonyme renouvelée régulièrement.</li>
+    <li><strong>Cloudflare Turnstile</strong> (Cloudflare, Inc., États-Unis) : vérification anti-robot sur la connexion,
+        l'inscription et le contact. Transfert hors UE encadré par le Data Privacy Framework UE–États-Unis. Voir la
+        <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">politique de Cloudflare</a>.</li>
+</ul>
+
+<h2 class="h5 mt-4">Vos droits</h2>
+<p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition.</p>
+<ul>
+    <li>Avec un compte, la page <strong>Profil</strong> permet de changer l'e-mail et de <strong>supprimer le compte</strong> :
+        tournées, missions et historique sont alors effacés immédiatement ; vos messages de contact sont conservés mais rendus anonymes (compte et e-mail de réponse retirés).</li>
+    <li>Sans compte, effacer les cookies du site détache votre tournée de votre navigateur.</li>
+    <li>Pour toute autre demande : <a href="{{ path('contact') }}">page de contact</a>. Réponse sous un mois.</li>
+</ul>
+<p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL
+    (<a href="https://www.cnil.fr/fr/plaintes" rel="noopener">cnil.fr/fr/plaintes</a>).</p>

@@ -1,0 +1,30 @@
+{% trans_default_domain 'admin' %}
+{% set contact = entity.instance %}
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="badge badge-secondary">{{ contact.category.label|trans({}, 'messages') }}</span>
+                <span class="badge {{ contact.resolved ? 'badge-success' : 'badge-warning' }}">{{ contact.status.label|trans({}, 'messages') }}</span>
+                <span class="text-muted">{{ contact.createdAt|date('d/m/Y H:i') }} · {{ contact.locale }}</span>
+                <span class="text-muted">· {{ contact.author ? contact.author.email : 'tour.guest'|trans }}</span>
+            </div>
+            <form method="post" action="{{ path(contact.resolved ? 'admin_contact_messages_reopen' : 'admin_contact_messages_resolve', {id: contact.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_contact_status') }}">
+                <button type="submit" class="btn {{ contact.resolved ? 'btn-secondary' : 'btn-success' }}">{{ (contact.resolved ? 'contact.reopen' : 'contact.resolve')|trans }}</button>
+            </form>
+        </div>
+        <dl class="row mt-3 mb-0">
+            <dt class="col-sm-3">{{ 'contact.reply_email'|trans }}</dt>
+            <dd class="col-sm-9">
+                {% if contact.replyEmail %}
+                    <a href="mailto:{{ contact.replyEmail }}">{{ contact.replyEmail }}</a>
+                {% else %}
+                    <span class="text-muted">{{ 'contact.no_reply_email'|trans }}</span>
+                {% endif %}
+            </dd>
+        </dl>
+        <h2 class="h5 mt-3">{{ 'contact.message'|trans }}</h2>
+        <p class="mb-0" style="white-space: pre-wrap">{{ contact.message }}</p>
+    </div>
+</div>
